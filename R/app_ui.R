@@ -2,15 +2,26 @@
 #' 
 #' @param request Internal parameter for `{shiny}`. 
 #'     DO NOT REMOVE.
-#' @import shiny
+#' @import shiny 
+#' @import mapselector
 #' @noRd
 app_ui <- function(request) {
   tagList(
     # Leave this function for adding external resources
     golem_add_external_resources(),
-    # Your application UI logic 
-    fluidPage(
-      h1("tableauproto")
+    tableau_de_bord(
+      dash_title(title = "Analyse de raréfaction"), 
+      dash_sidebar(
+        badge(),
+        sliderInput("obs",
+                    "Nombre d'observations:",
+                    min = 0,
+                    max = 1000,
+                    value = 500),
+        textInput("name", "What's your name?")
+      ), 
+      dash_tabs(tab_map(),
+                tab_gen())
     )
   )
 }
