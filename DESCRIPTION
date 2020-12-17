@@ -26,3 +26,5 @@ Suggests:
 Remotes:
     ReseauBiodiversiteQuebec/mapselector
 VignetteBuilder: knitr
+Depends: 
+    R (>= 2.10)
