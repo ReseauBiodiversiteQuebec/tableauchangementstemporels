@@ -46,7 +46,7 @@ usethis::use_test( "app" )
 # Documentation
 
 ## Vignette ----
-usethis::use_vignette("tableauproto")
+usethis::use_vignette("adding_space")
 devtools::build_vignettes()
 
 ## Code Coverage----

@@ -1,0 +1,56 @@
+---
+title: "adding_space"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{adding_space}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(tableauchangementstemporels)
+# later library(mapselector)
+library(tidyverse)
+
+dd <- tableauchangementstemporels::inatQC %>% head(50)
+
+dd_sf <- dd %>% 
+  sf::st_as_sf(coords = c("longitude", "latitude")) %>% # set coordinates
+  sf::st_set_crs(value = "+proj=longlat +datum=WGS84 +no_defs")
+
+dd_joined <- dd_sf %>% sf::st_join(mapselector::CERQ["NOM_PROV_N"])
+
+dd_joined %>% 
+  as.data.frame %>% 
+  count(region, NOM_PROV_N)
+
+
+```
+
+
+OK now try for the whole thing:
+
+```{r}
+
+# Voila the code that could be adapted into a function within mapselector.. assuming that it isn't very wrong.
+inat_NOM_PROV_N <- tableauchangementstemporels::inatQC %>% 
+  sf::st_as_sf(coords = c("longitude", "latitude")) %>% # set coordinates
+  # this CRS could be set in some general place in mapselector and then modified only once.
+  sf::st_set_crs(value = "+proj=longlat +datum=WGS84 +no_defs") %>% 
+  sf::st_join(mapselector::CERQ["NOM_PROV_N"])
+  
+
+inat_NOM_PROV_N %>% 
+  as.data.frame %>% 
+  count(region, NOM_PROV_N) %>% 
+  knitr::kable(.)
+
+```
+
