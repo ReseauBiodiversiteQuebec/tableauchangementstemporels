@@ -18,6 +18,13 @@
 ## But don't add "tidyverse"
 usethis::use_package( "mapselector", "suggests")
 usethis::use_package( "shiny")
+usethis::use_package("dplyr")
+usethis::use_package("tidyr")
+usethis::use_package("ggplot2")
+usethis::use_package("assertthat")
+usethis::use_package("lubridate")
+usethis::use_package("purrr")
+
 
 ## Add modules ----
 ## Create a module infrastructure in R/
@@ -28,6 +35,7 @@ golem::add_module( name = "name_of_module2" ) # Name of the module
 ## Creates ftc_* and utils_*
 golem::add_fct( "helpers" ) 
 golem::add_utils( "helpers" )
+golem::add_utils( "observation_dl_process")
 
 ## External resources
 ## Creates .js and .css files at inst/app/www
