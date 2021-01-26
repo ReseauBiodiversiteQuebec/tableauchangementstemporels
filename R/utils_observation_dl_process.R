@@ -71,15 +71,15 @@ convert_julian_to_gantt <- function(.top_10_julian_day = top_10_julian_day){
     tidyr::pivot_longer(cols = c("start", "end"), names_to = "dayname", values_to = "jday")
 }
   
-dd <- get_data()
-find_top_ten(dd)
-
-library(magrittr)
-
-%>%
-  dplyr::arrange(NOM_PROV_N,desc(n))
-
-make_gantt_from_observations <- function(dd){
-  
-}
+# dd <- get_data()
+# find_top_ten(dd)
+# 
+# library(magrittr)
+# 
+# %>%
+#   dplyr::arrange(NOM_PROV_N,desc(n))
+# 
+# make_gantt_from_observations <- function(dd){
+#   
+# }
   
