@@ -4,7 +4,7 @@
 \alias{filter_julday_by_top}
 \title{take only the top 10 species in each site}
 \usage{
-filter_julday_by_top(count_taxa = count_taxa, top_spp = top10species)
+filter_julday_by_top(count_taxa_df = count_taxa, top_spp = top10species)
 }
 \description{
 take only the top 10 species in each site

@@ -3,6 +3,7 @@
 export(convert_julian_to_gantt)
 export(count_taxa_julday)
 export(filter_julday_by_top)
+export(filter_plot_gantt)
 export(find_top_ten)
 export(get_data)
 export(run_app)

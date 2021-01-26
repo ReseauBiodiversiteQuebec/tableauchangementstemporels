@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup, eval = FALSE}
+```{r gantt_process, eval = TRUE}
 library(tableauchangementstemporels)
 
 observations <- get_data()
@@ -29,3 +29,15 @@ filtered_by_top <- filter_julday_by_top(count_taxa = top_ten_julday, top_spp = t
 gantt_observations <- convert_julian_to_gantt(filtered_by_top)
 
 ```
+
+
+```{r, eval=FALSE}
+library(dplyr)
+gantt_observations %>% 
+  filter(NOM_PROV_N == "Les Appalaches")
+  
+
+filter_plot_gantt("Les Appalaches", gantt_observations)
+```
+
+

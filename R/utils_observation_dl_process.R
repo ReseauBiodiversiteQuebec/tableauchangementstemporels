@@ -63,6 +63,10 @@ filter_julday_by_top <- function(count_taxa_df = count_taxa,
   return(top_10_julian_day)
 }
   
+#' fill in a gantt chart
+#' 
+#' 
+#' @importFrom magrittr %>%
 #' @export
 convert_julian_to_gantt <- function(.top_10_julian_day = top_10_julian_day){
   .top_10_julian_day %>%
@@ -74,3 +78,40 @@ convert_julian_to_gantt <- function(.top_10_julian_day = top_10_julian_day){
     dplyr::ungroup(.) %>% 
     tidyr::pivot_longer(cols = c("start", "end"), names_to = "dayname", values_to = "jday")
 }
+
+#' function that takes a site name and spits out a plot
+#' 
+#' @importFrom magrittr %>%
+#' @export
+filter_plot_gantt <- function(site_selected, gantt_df){
+
+  gantt_site <- subset(gantt_df, gantt_df$NOM_PROV_N == site_selected)
+  
+  ganttplot <- ggplot2::ggplot(gantt_site,  
+                  ggplot2::aes(x = jday, y = taxon_species_name)) +
+    ggplot2::geom_line(size = 20, col = "darkgreen") +
+    ggplot2::theme_minimal() +
+    ggplot2::coord_cartesian(xlim = c(0,365)) +
+    ggplot2::labs(x = "Jour de l'année", 
+                  y = NULL)
+  
+  renderPlot({ganttplot})
+}
+
+
+format_sample_data <- function(){
+  observations <- get_data()
+  
+  top_ten <- find_top_ten(observations)
+  
+  top_ten_julday <- count_taxa_julday(observations)
+  
+  filtered_by_top <- filter_julday_by_top(count_taxa = top_ten_julday, top_spp = top_ten)
+  
+  
+  gantt_observations <- convert_julian_to_gantt(filtered_by_top)
+  
+  return(gantt_observations)
+}
+
+
