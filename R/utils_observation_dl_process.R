@@ -1,6 +1,7 @@
 
 # simple function to get the data
 # TODO add api request to atlas later
+#' @export
 get_data <- function(){
   dat <- tableauphenologie::inatqc
   dat_reg <- mapselector::add_region(dat)
@@ -17,13 +18,14 @@ get_data <- function(){
   
 #' identify the top 10 species in every site
 #' @importFrom magrittr %>%
+#' @export
 find_top_ten <- function(dataset){
   
   assertthat::assert_that(
     assertthat::has_name(dataset, c("NOM_PROV_N"))
   )
   
-  top10species <- dd %>% 
+  top10species <- dataset %>% 
     dplyr::count(NOM_PROV_N, taxon_species_name) %>% 
     dplyr::group_by(NOM_PROV_N) %>%
     dplyr::arrange(NOM_PROV_N,desc(n)) %>%
@@ -40,11 +42,12 @@ find_top_ten <- function(dataset){
 
 #' count observations on each day of the year for each species
 #' @importFrom magrittr %>%
+#' @export
 count_taxa_julday <- function(dataset){
   count_taxa <- dataset %>%
     dplyr::mutate(julianday = lubridate::yday(observed_on)) %>%
     dplyr::group_by(NOM_PROV_N, taxon_species_name, julianday) %>% 
-    dplyr::tally
+    dplyr::tally(.)
   
   return(count_taxa)
 }
@@ -52,34 +55,22 @@ count_taxa_julday <- function(dataset){
 #' take only the top 10 species in each site
 #' 
 #' @importFrom magrittr %>%
-filter_julday_by_top <- function(count_taxa = count_taxa,
+#' @export
+filter_julday_by_top <- function(count_taxa_df = count_taxa,
                                  top_spp = top10species){
-  top_10_julian_day <- count_taxa %>%
-    dplyr::semi_join(top10species, by = c("NOM_PROV_N", "taxon_species_name"))
+  top_10_julian_day <- count_taxa_df %>%
+    dplyr::semi_join(top_spp, by = c("NOM_PROV_N", "taxon_species_name"))
   return(top_10_julian_day)
 }
   
-
+#' @export
 convert_julian_to_gantt <- function(.top_10_julian_day = top_10_julian_day){
   .top_10_julian_day %>%
     dplyr::group_by(NOM_PROV_N, taxon_species_name) %>% 
-    tidyr::nest %>% 
+    tidyr::nest(.) %>% 
     dplyr::mutate(purrr::map_df(data, ~ tibble::tibble(start = min(.x$julianday), 
                                          end = max(.x$julianday)))) %>% 
     dplyr::select(-data) %>% 
-    dplyr::ungroup %>% 
+    dplyr::ungroup(.) %>% 
     tidyr::pivot_longer(cols = c("start", "end"), names_to = "dayname", values_to = "jday")
 }
-  
-# dd <- get_data()
-# find_top_ten(dd)
-# 
-# library(magrittr)
-# 
-# %>%
-#   dplyr::arrange(NOM_PROV_N,desc(n))
-# 
-# make_gantt_from_observations <- function(dd){
-#   
-# }
-  

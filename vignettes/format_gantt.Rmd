@@ -1,0 +1,31 @@
+---
+title: "format_gantt"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{format_gantt}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, eval = FALSE}
+library(tableauchangementstemporels)
+
+observations <- get_data()
+
+top_ten <- find_top_ten(observations)
+
+top_ten_julday <- count_taxa_julday(observations)
+
+filtered_by_top <- filter_julday_by_top(count_taxa = top_ten_julday, top_spp = top_ten)
+
+
+gantt_observations <- convert_julian_to_gantt(filtered_by_top)
+
+```
