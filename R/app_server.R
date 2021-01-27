@@ -20,7 +20,7 @@ app_server <- function( input, output, session ) {
                         ## this can be a function which returns a reactive output (e.g. renderPlotly)
                         tabPanel(title = "Visualization",
                                  # see mapselector::ipso_zoo for an example
-                                 filter_plot_gantt(chosen_region(), gantt_df = sample_data)
+                                 filter_plot_gantt(chosen_region, gantt_df = sample_data)
                         ),
                         ## could also be html elements
                         tabPanel(title = "C'est un tab",

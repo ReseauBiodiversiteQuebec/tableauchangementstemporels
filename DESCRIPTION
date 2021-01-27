@@ -18,7 +18,8 @@ Imports:
     ggplot2,
     assertthat,
     lubridate,
-    purrr
+    purrr,
+    pkgload
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
