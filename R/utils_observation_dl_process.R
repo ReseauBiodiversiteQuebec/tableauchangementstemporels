@@ -3,7 +3,7 @@
 # TODO add api request to atlas later
 #' @export
 get_data <- function(){
-  dat <- tableauphenologie::inatqc
+  dat <- tableauchangementstemporels::inatQC
   dat_reg <- mapselector::add_region(dat)
   
   dd_no_geom <- subset(as.data.frame(dat_reg), select = -geometry)
@@ -100,9 +100,38 @@ format_for_gantt_figure <- function(.filtered_by_top){
   return(gantt_observations)
 }
 
+
 format_for_count_figure <- function(.filtered_by_top){
   
+  
+  chosen_species_range_days <- .filtered_by_top %>%
+    dplyr::group_by(NOM_PROV_N, taxon_species_name) %>% 
+    dplyr::summarize(jday = range(julianday)) %>%
+    # rank species -- flexibly, for those seen only one day
+    dplyr::mutate(dayname = c("start", "end")) %>% 
+    tidyr::pivot_wider(names_from = dayname, values_from = jday) 
+  
+  
+  n_per_day <- chosen_species_range_days %>%
+    dplyr::mutate(dayrange = purrr::map2(start, end, ~.x:.y)) %>%
+    dplyr::select(dayrange) %>%
+    tidyr::unnest(cols = c(dayrange)) %>%
+    dplyr::group_by(region, dayrange) %>% dplyr::tally(.) %>%
+    # grouped by region
+    tidyr::nest %>% 
+    dplyr::mutate(data2 = purrr::map(data, dplyr::right_join, 
+                                     y = tibble::tibble(dayrange = 1:365),
+                                     by = "dayrange")) %>%
+    dplyr::select(-data) %>% 
+    tidyr::unnest(data2) %>% 
+    tidyr::replace_na(list(n = 0)) %>%
+    dplyr::arrange(region, dayrange) %>% 
+    dplyr::ungroup %>% 
+    as.data.frame(.)
+  
+  return(n_per_day)
 }
+
 
 
 
