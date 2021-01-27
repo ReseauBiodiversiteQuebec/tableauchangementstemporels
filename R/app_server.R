@@ -13,6 +13,8 @@ app_server <- function( input, output, session ) {
   
   gantt_data <- format_for_gantt_figure(sample_data)
   
+  count_data <- format_for_count_figure(sample_data)
+  
   # convenient reactive value for the clicked region
   chosen_region <- reactive({input$map_shape_click$id})
   
@@ -25,8 +27,8 @@ app_server <- function( input, output, session ) {
                                  filter_plot_gantt(chosen_region, gantt_df = gantt_data)
                         ),
                         ## could also be html elements
-                        tabPanel(title = "C'est un tab",
-                                 div("Bien sur c'est un tab")),
+                        tabPanel(title = "count",
+                                 filter_plot_count(chosen_region, count_df = count_data)),
                         ## can also (probably should?) include a reactive input from the selected map region
                         tabPanel(title = "ou suis-je",
                                  renderText({paste("tu est sur", chosen_region())})

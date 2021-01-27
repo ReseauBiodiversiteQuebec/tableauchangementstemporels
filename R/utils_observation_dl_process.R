@@ -111,22 +111,24 @@ format_for_count_figure <- function(.filtered_by_top){
     dplyr::mutate(dayname = c("start", "end")) %>% 
     tidyr::pivot_wider(names_from = dayname, values_from = jday) 
   
-  
+  # browser()
   n_per_day <- chosen_species_range_days %>%
     dplyr::mutate(dayrange = purrr::map2(start, end, ~.x:.y)) %>%
     dplyr::select(dayrange) %>%
     tidyr::unnest(cols = c(dayrange)) %>%
-    dplyr::group_by(region, dayrange) %>% dplyr::tally(.) %>%
+    dplyr::ungroup(.) %>% 
+    dplyr::group_by(NOM_PROV_N, dayrange, .add = FALSE) %>% 
+    dplyr::tally(.) %>%
     # grouped by region
-    tidyr::nest %>% 
+    tidyr::nest(.) %>% 
     dplyr::mutate(data2 = purrr::map(data, dplyr::right_join, 
                                      y = tibble::tibble(dayrange = 1:365),
                                      by = "dayrange")) %>%
     dplyr::select(-data) %>% 
     tidyr::unnest(data2) %>% 
     tidyr::replace_na(list(n = 0)) %>%
-    dplyr::arrange(region, dayrange) %>% 
-    dplyr::ungroup %>% 
+    dplyr::arrange(NOM_PROV_N, dayrange) %>% 
+    dplyr::ungroup(.) %>% 
     as.data.frame(.)
   
   return(n_per_day)
@@ -153,6 +155,19 @@ filter_plot_gantt <- function(site_selected, gantt_df){
     ggplot2::coord_cartesian(xlim = c(0,365)) +
     ggplot2::labs(x = "Jour de l'année", 
                   y = NULL)
+  })
+}
+
+filter_plot_count <- function(site_selected, count_df){
+  renderPlot({
+    ggplot2::ggplot(
+      subset(count_df, count_df$NOM_PROV_N == site_selected()),  
+      ggplot2::aes(x = dayrange, y = n)) + 
+      ggplot2::geom_polygon() + 
+      ggplot2::theme_minimal() + 
+      ggplot2::coord_cartesian(xlim = c(0,365)) +
+      ggplot2::labs(x = "Jour de l'année", 
+                    y = "Richess d'especes")
   })
 }
 

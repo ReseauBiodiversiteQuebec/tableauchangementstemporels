@@ -10,7 +10,7 @@ app_ui <- function(request) {
     # Leave this function for adding external resources
     golem_add_external_resources(),
     tableau_de_bord(
-      dash_title(title = "Comment la biodiversité québécoise évolue-t-elle avec le temps"), 
+      dash_title(title = "Changements temporels"), 
       dash_sidebar(
         badge(),
         sliderInput("obs",

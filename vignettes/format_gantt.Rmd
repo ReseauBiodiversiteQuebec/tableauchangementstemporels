@@ -40,4 +40,9 @@ gantt_observations %>%
 filter_plot_gantt("Les Appalaches", gantt_observations)
 ```
 
+```{r, eval=FALSE}
+top_n_data <- select_top_n()
+
+format_for_count_figure(top_n_data)
+```
 
