@@ -4,7 +4,7 @@
 \alias{find_top_ten}
 \title{identify the top 10 species in every site}
 \usage{
-find_top_ten(dataset)
+find_top_ten(dataset, how_many_top = 10)
 }
 \description{
 identify the top 10 species in every site

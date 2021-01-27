@@ -46,3 +46,50 @@ top_n_data <- select_top_n()
 format_for_count_figure(top_n_data)
 ```
 
+
+### sorting out the groups
+
+```r
+c("amphibiens", "mammifères", "oiseaux", "poissons", "reptiles", 
+"") 
+```
+
+```{r}
+glimpse(observations)
+```
+
+```{r, eval = FALSE}
+# plants are a kingdom 
+
+unique(observations$taxon_kingdom_name)
+
+
+unique(observations$taxon_phylum_name)
+
+
+unique(observations$taxon_phylum_name)
+
+observations %>% 
+  mutate(taxon_group = 
+           case_when(
+             taxon_kingdom_name == "Plantae" ~ 
+           ))
+
+```
+
+
+## divide into coarser groups
+
+birds
+plants
+other animals
+
+```{r}
+library(tidyverse)
+tableauchangementstemporels::data_with_region %>% 
+  glimpse
+  
+```
+
+
+

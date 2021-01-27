@@ -19,7 +19,7 @@ get_data <- function(){
 #' identify the top 10 species in every site
 #' @importFrom magrittr %>%
 #' @export
-find_top_ten <- function(dataset){
+find_top_ten <- function(dataset, how_many_top = 10){
   
   assertthat::assert_that(
     assertthat::has_name(dataset, c("NOM_PROV_N"))
@@ -30,7 +30,7 @@ find_top_ten <- function(dataset){
     dplyr::group_by(NOM_PROV_N) %>%
     dplyr::arrange(NOM_PROV_N,desc(n)) %>%
     tidyr::nest(.) %>%
-    dplyr::mutate(top10 = purrr::map(data, head, 10)) %>%
+    dplyr::mutate(top10 = purrr::map(data, head, how_many_top)) %>%
     dplyr::select(-data) %>%
     tidyr::unnest(top10) %>% 
     dplyr::select(-n) %>% 
@@ -93,6 +93,18 @@ select_top_n <- function(){
   
   return(filtered_by_top)
 }
+
+select_top_n_df_input <- function(df){
+  
+  top_ten <- find_top_ten(df)
+  
+  top_ten_julday <- count_taxa_julday(observations)
+  
+  filtered_by_top <- filter_julday_by_top(count_taxa = top_ten_julday, top_spp = top_ten)
+  
+  return(filtered_by_top)
+}
+
 
 
 format_for_gantt_figure <- function(.filtered_by_top){
@@ -168,6 +180,34 @@ filter_plot_count <- function(site_selected, count_df){
       ggplot2::coord_cartesian(xlim = c(0,365)) +
       ggplot2::labs(x = "Jour de l'année", 
                     y = "Richess d'especes")
+  })
+}
+
+#' @import patchwork 
+plot_both_together <- function(site_selected, gantt_df, count_df){
+  
+  renderPlot({
+    ganttplot <-   ggplot2::ggplot(
+      subset(gantt_df, gantt_df$NOM_PROV_N == site_selected()),  
+      ggplot2::aes(x = jday, y = taxon_species_name)   
+    ) +
+      ggplot2::geom_line(size = 20, col = "darkgreen") +
+      ggplot2::theme_minimal() +
+      ggplot2::coord_cartesian(xlim = c(0,365)) +
+      ggplot2::labs(x = "Jour de l'année", 
+                    y = NULL)
+    
+    countplot <-     ggplot2::ggplot(
+      subset(count_df, count_df$NOM_PROV_N == site_selected()),  
+      ggplot2::aes(x = dayrange, y = n)) + 
+      ggplot2::geom_polygon() + 
+      ggplot2::theme_minimal() + 
+      ggplot2::coord_cartesian(xlim = c(0,365)) +
+      ggplot2::labs(x = "Jour de l'année", 
+                    y = "Richess d'especes")
+    
+    ganttplot / countplot
+  
   })
 }
 

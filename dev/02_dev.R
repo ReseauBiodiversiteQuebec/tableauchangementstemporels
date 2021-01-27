@@ -24,6 +24,7 @@ usethis::use_package("ggplot2")
 usethis::use_package("assertthat")
 usethis::use_package("lubridate")
 usethis::use_package("purrr")
+usethis::use_package("patchwork")
 
 
 ## Add modules ----

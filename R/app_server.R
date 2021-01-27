@@ -24,14 +24,12 @@ app_server <- function( input, output, session ) {
                         ## this can be a function which returns a reactive output (e.g. renderPlotly)
                         tabPanel(title = "Visualization",
                                  # see mapselector::ipso_zoo for an example
-                                 filter_plot_gantt(chosen_region, gantt_df = gantt_data)
-                        ),
+                                 filter_plot_gantt(chosen_region, gantt_df = gantt_data)),
                         ## could also be html elements
                         tabPanel(title = "count",
                                  filter_plot_count(chosen_region, count_df = count_data)),
                         ## can also (probably should?) include a reactive input from the selected map region
                         tabPanel(title = "ou suis-je",
-                                 renderText({paste("tu est sur", chosen_region())})
-                        )
+                                 plot_both_together(chosen_region, gantt_data, count_data))
   )
 }
