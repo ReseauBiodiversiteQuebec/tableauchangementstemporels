@@ -13,15 +13,16 @@ app_ui <- function(request) {
       dash_title(title = "Changements temporels"), 
       dash_sidebar(
         badge(),
-        sliderInput("obs",
-                    "Nombre d'observations:",
-                    min = 0,
-                    max = 1000,
-                    value = 500),
-        textInput("name", "What's your name?")
+        checkboxGroupInput("group",
+                    "Groupes d'organismes:",
+                    choices = c("mammals", "birds", "plants", "other"),
+                    selected = c("mammals", "birds", "plants", "other")),
+        numericInput("number_obs",
+                     "Pour combien des especes?", 
+                     value = 10)
       ), 
       dash_tabs(tab_map(),
-                tab_gen())
+                tab_map(title = "Chiroptères"))
     )
   )
 }

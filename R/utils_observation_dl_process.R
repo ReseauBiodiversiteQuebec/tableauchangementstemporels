@@ -94,13 +94,14 @@ select_top_n <- function(){
   return(filtered_by_top)
 }
 
-select_top_n_df_input <- function(df){
+select_top_n_df_input <- function(df, .how_many_top = 10){
   
-  top_ten <- find_top_ten(df)
+  top_ten <- find_top_ten(df, how_many_top = .how_many_top)
   
-  top_ten_julday <- count_taxa_julday(observations)
+  top_ten_julday <- count_taxa_julday(df)
   
-  filtered_by_top <- filter_julday_by_top(count_taxa = top_ten_julday, top_spp = top_ten)
+  filtered_by_top <- filter_julday_by_top(count_taxa = top_ten_julday,
+                                          top_spp = top_ten)
   
   return(filtered_by_top)
 }
