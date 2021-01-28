@@ -50,5 +50,4 @@ Ce tableau de bord indique quels animaux ont été vus dans quelles régions du 
 Il indique également <b>quand</b> cette information a été recueillie. Les animaux et les plantes sont moins actifs en hiver, et plus actifs en été. En explorant ces données, n'oubliez pas : il en va de même pour les personnes qui les observent !
     "
     })
-    
 }
