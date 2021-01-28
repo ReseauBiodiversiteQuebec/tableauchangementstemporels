@@ -214,20 +214,21 @@ plot_both_together <- function(site_selected, gantt_df, count_df){
 
 plot_some_bats <- function(site_selected, bat_df){
   
-  p <- 
-    ggplot2::ggplot(
-      subset(bat_df, bat_df$Numero.de.reference.du.site == site_selected())) +
-    ggplot2::aes(x = wk, y = n, fill = match, text = match) + 
-    ggplot2::geom_area() + 
-    ggplot2::scale_fill_brewer(palette = "Dark2") + 
-    ggplot2::guides(fill = FALSE) + 
-    ggplot2::theme_bw() +
-    ggplot2::labs(y = "Chiropteres observés", x = "Semaine de l'année")
+  plotly::renderPlotly({
+    p <- 
+      ggplot2::ggplot(
+        subset(bat_df, bat_df$Numero.de.reference.du.site == site_selected())) +
+      ggplot2::aes(x = wk, y = n, fill = match, text = match) + 
+      ggplot2::geom_area() + 
+      ggplot2::scale_fill_brewer(palette = "Dark2") + 
+      ggplot2::guides(fill = FALSE) + 
+      ggplot2::theme_bw() +
+      ggplot2::labs(y = "Chiropteres observés", x = "Semaine de l'année")
+    
+    plotly::ggplotly(p, tooltip = "text") %>% 
+      plotly::layout(legend = list(orientation = 'h',
+                                   x = 0, 
+                                   y = -0.4))
+  })  
   
-  bat_plotly <- plotly::ggplotly(p, tooltip = "text") %>% 
-    plotly::layout(legend = list(orientation = 'h',
-                                 x = 0, 
-                                 y = -0.4))
-  
-  plotly::renderPlotly({bat_plotly})
 }
