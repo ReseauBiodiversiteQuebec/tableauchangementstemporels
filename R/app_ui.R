@@ -12,7 +12,9 @@ app_ui <- function(request) {
     tableau_de_bord(
       dash_title(title = "Changements temporels"), 
       dash_sidebar(
-        badge(),
+        badge(
+          text_badge = htmlOutput("what_does_the_badge_say")
+        ),
         checkboxGroupInput("group",
                     "Groupes d'organismes:",
                     choices = c("mammals", "birds", "plants", "other"),
