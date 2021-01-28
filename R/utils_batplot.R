@@ -1,6 +1,7 @@
 
 make_leaflet_batmap <- function(){
-  leaflet::leaflet(tableauchangementstemporels::sites_to_plot) %>%
+  leaflet::leaflet(tableauchangementstemporels::sites_to_plot,
+                   options = leaflet::leafletOptions(minZoom = 6)) %>%
     leaflet::addTiles() %>% # Affichage du fond de carte
     leaflet::addCircleMarkers(lng = ~long_site, # Positionnement des sites avec les coordonnées long/lat
                      lat = ~lat_site,

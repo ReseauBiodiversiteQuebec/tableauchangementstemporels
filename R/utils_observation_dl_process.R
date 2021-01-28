@@ -201,7 +201,7 @@ plot_both_together <- function(site_selected, gantt_df, count_df){
     countplot <-     ggplot2::ggplot(
       subset(count_df, count_df$NOM_PROV_N == site_selected()),  
       ggplot2::aes(x = dayrange, y = n)) + 
-      ggplot2::geom_polygon() + 
+      ggplot2::geom_area() + 
       ggplot2::theme_minimal() + 
       ggplot2::coord_cartesian(xlim = c(0,365)) +
       ggplot2::labs(x = "Jour de l'année", 
