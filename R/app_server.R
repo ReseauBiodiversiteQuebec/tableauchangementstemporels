@@ -21,11 +21,24 @@ app_server <- function( input, output, session ) {
   # convenient reactive value for the clicked region
   chosen_region <- reactive({input$map_shape_click$id})
   
+  # on a different map, with a different thing to click:
+  chosen_site <- reactive({input$batmap_marker_click$id})
+  
   mod_modal_make_server("modal_make_ui_1", 
                         region = chosen_region,
                         # here place all the tabs you want in your final modal! 
                         ## this can be a function which returns a reactive output (e.g. renderPlotly)
                         tabPanel(title = "Visualization",
                                  plot_both_together(chosen_region, gantt_data, count_data))
+  )
+  
+  bat_df_saved <- tableauchangementstemporels::common_bats_wk
+  
+  mod_modal_make_server("modal_make_ui_bats", 
+                        region = chosen_site,
+                        # here place all the tabs you want in your final modal! 
+                        ## this can be a function which returns a reactive output (e.g. renderPlotly)
+                        tabPanel(title = "Visualization",
+                                 plot_some_bats(chosen_site, bat_df_saved))
   )
 }
