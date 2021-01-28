@@ -42,12 +42,13 @@ app_server <- function( input, output, session ) {
                                  plot_some_bats(chosen_site, bat_df_saved))
   )
   
-  output$what_does_the_badge_say <- renderText({"
+  output$what_does_the_badge_say <- renderText({paste("
     Les données scientifiques recueillies par les citoyens nous donnent des informations précieuses sur la biodiversité québécoise. 
 <br><br>
 Ce tableau de bord indique quels animaux ont été vus dans quelles régions du Québec.
 <br><br>
-Il indique également <b>QUAND</b> cette information a été recueillie. Les animaux et les plantes sont moins actifs en hiver, et plus actifs en été. En explorant ces données, n'oubliez pas : il en va de même pour les personnes qui les observent !
-    "})
+Il indique également <b>quand</b> cette information a été recueillie. Les animaux et les plantes sont moins actifs en hiver, et plus actifs en été. En explorant ces données, n'oubliez pas : il en va de même pour les personnes qui les observent !
+    ")#, input$tabs)
+    })
     
 }

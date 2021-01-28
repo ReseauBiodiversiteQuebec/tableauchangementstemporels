@@ -23,8 +23,8 @@ app_ui <- function(request) {
                      "Pour combien des especes?", 
                      value = 10)
       ), 
-      dash_tabs(tab_map(title = "ATLAS"),
-                tab_map(title = "COLEO", id = 'batmap'))
+      dash_tabs(tab_map(title = "ATLAS", value = "atlas"),
+                tab_map(title = "COLEO", id = 'batmap', value = "coleo"))
     )
   )
 }
