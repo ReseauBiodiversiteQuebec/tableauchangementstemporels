@@ -21,8 +21,8 @@ app_ui <- function(request) {
                      "Pour combien des especes?", 
                      value = 10)
       ), 
-      dash_tabs(tab_map(),
-                tab_map(title = "Chiroptères"))
+      dash_tabs(tab_map())
+                # tab_map(title = "Chiroptères"))
     )
   )
 }
