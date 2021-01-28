@@ -9,6 +9,8 @@ app_server <- function( input, output, session ) {
   # Your application server logic 
   output$map <- leaflet::renderLeaflet(make_leaflet_map())
   
+  output$batmap <- leaflet::renderLeaflet(make_leaflet_batmap())
+  
   sample_data <- select_top_n_df_input(tableauchangementstemporels::data_with_region,
                                        .how_many_top = 7)
   

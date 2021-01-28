@@ -37,6 +37,7 @@ golem::add_module( name = "name_of_module2" ) # Name of the module
 golem::add_fct( "helpers" ) 
 golem::add_utils( "helpers" )
 golem::add_utils( "observation_dl_process")
+golem::add_utils("batplot")
 
 ## External resources
 ## Creates .js and .css files at inst/app/www
