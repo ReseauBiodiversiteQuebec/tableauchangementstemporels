@@ -159,15 +159,18 @@ format_for_count_figure <- function(.filtered_by_top){
 filter_plot_gantt <- function(site_selected, gantt_df){
 
   renderPlot({
-  ggplot2::ggplot(
-    subset(gantt_df, gantt_df$NOM_PROV_N == site_selected()),  
-    ggplot2::aes(x = jday, y = taxon_species_name)   
+    ggplot2::ggplot(
+      subset(gantt_df, gantt_df$NOM_PROV_N == site_selected()),  
+      ggplot2::aes(x = jday,
+                   y = taxon_species_name,
+                   color = taxon_class_name)   
     ) +
-    ggplot2::geom_line(size = 20, col = "darkgreen") +
-    ggplot2::theme_minimal() +
-    ggplot2::coord_cartesian(xlim = c(0,365)) +
-    ggplot2::labs(x = "Jour de l'année", 
-                  y = NULL)
+      ggplot2::geom_line(size = 20) +
+      ggplot2::theme_minimal() +
+      ggplot2::coord_cartesian(xlim = c(0,365)) +
+      ggplot2::labs(x = "Jour de l'année", 
+                    y = NULL)+
+      ggplot2::guides(color = FALSE)
   })
 }
 
@@ -190,9 +193,11 @@ plot_both_together <- function(site_selected, gantt_df, count_df){
   renderPlot({
     ganttplot <-   ggplot2::ggplot(
       subset(gantt_df, gantt_df$NOM_PROV_N == site_selected()),  
-      ggplot2::aes(x = jday, y = taxon_species_name)   
+      ggplot2::aes(x = jday, 
+                   y = taxon_species_name,
+                   color = taxon_class_name)   
     ) +
-      ggplot2::geom_line(size = 20, col = "darkgreen") +
+      ggplot2::geom_line(size = 20) +
       ggplot2::theme_minimal() +
       ggplot2::coord_cartesian(xlim = c(0,365)) +
       ggplot2::labs(x = "Jour de l'année", 
@@ -205,7 +210,9 @@ plot_both_together <- function(site_selected, gantt_df, count_df){
       ggplot2::theme_minimal() + 
       ggplot2::coord_cartesian(xlim = c(0,365)) +
       ggplot2::labs(x = "Jour de l'année", 
-                    y = "Richess d'especes")
+                    y = "Richess d'especes") +
+      ggplot2::scale_color_brewer(palette = "Set2") + 
+      ggplot2::guides(color = FALSE)
     
     ganttplot / countplot
   

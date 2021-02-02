@@ -92,4 +92,22 @@ tableauchangementstemporels::data_with_region %>%
 ```
 
 
+```{r}
+library(dplyr)
+tableauchangementstemporels::data_with_region %>% 
+  mutate(taxon_group = case_when(
+    taxon_class_name == "Aves" ~ "bird",
+    taxon_class_name == "Mammalia" ~ "mammal",
+    TRUE ~ "other"
+  ))
+
+
+# however tis information doesn't survive
+sample_data <- tableauchangementstemporels:::select_top_n_df_input(
+  tableauchangementstemporels::data_with_region,
+  .how_many_top = 7)
+
+```
+
+
 
