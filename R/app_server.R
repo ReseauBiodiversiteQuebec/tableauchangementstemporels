@@ -26,6 +26,7 @@ app_server <- function( input, output, session ) {
   
   mod_modal_make_server("modal_make_ui_1", 
                         region = chosen_region,
+                        title_format_pattern = "La phénologie pour la region %s",
                         # here place all the tabs you want in your final modal! 
                         ## this can be a function which returns a reactive output (e.g. renderPlotly)
                         tabPanel(title = "Visualization",
@@ -36,6 +37,7 @@ app_server <- function( input, output, session ) {
   
   mod_modal_make_server("modal_make_ui_bats", 
                         region = chosen_site,
+                        title_format_pattern = "Les chauves-souris de la region %s",
                         # here place all the tabs you want in your final modal! 
                         ## this can be a function which returns a reactive output (e.g. renderPlotly)
                         tabPanel(title = "Visualization",

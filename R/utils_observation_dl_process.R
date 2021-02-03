@@ -189,13 +189,14 @@ filter_plot_count <- function(site_selected, count_df){
 
 #' @import patchwork 
 plot_both_together <- function(site_selected, gantt_df, count_df){
-  
+  # browser()
   renderPlot({
     ganttplot <-   ggplot2::ggplot(
       subset(gantt_df, gantt_df$NOM_PROV_N == site_selected()),  
       ggplot2::aes(x = jday, 
-                   y = taxon_species_name,
-                   color = taxon_class_name)   
+                   y = taxon_species_name#,
+                   #color = taxon_class_name
+                   )   
     ) +
       ggplot2::geom_line(size = 20) +
       ggplot2::theme_minimal() +
