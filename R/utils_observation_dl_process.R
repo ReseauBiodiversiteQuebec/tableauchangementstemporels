@@ -221,11 +221,11 @@ plot_both_together <- function(site_selected, gantt_df, count_df){
 }
 
 plot_some_bats <- function(site_selected, bat_df){
-  
+  # browser()
   plotly::renderPlotly({
     p <- 
       ggplot2::ggplot(
-        subset(bat_df, bat_df$Numero.de.reference.du.site == site_selected())) +
+        subset(bat_df, bat_df$Nom.de.la.cellule == site_selected())) +
       ggplot2::aes(x = wk, y = n, fill = match, text = match) + 
       ggplot2::geom_area() + 
       ggplot2::scale_fill_brewer(palette = "Dark2") + 

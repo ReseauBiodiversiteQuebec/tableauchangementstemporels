@@ -17,9 +17,18 @@ app_server <- function( input, output, session ) {
                                        region_name = "NOM_PROV_N")
   
   
+  
+  rcoleo_sites_sf <- mapselector::get_rcoleo_sites_sf()
+  
+  psites <- dplyr::left_join(rcoleo_sites_sf, 
+                             dplyr::select(tableauchangementstemporels::sites_to_plot, Nom.de.la.cellule, Numero.de.reference.du.site), 
+                             by = c("site_code" = "Numero.de.reference.du.site"))
+  
   chosen_site <- mod_map_select_server("bat_map",
                                        what_to_click = "marker",
-                                       fun = make_leaflet_batmap)
+                                       fun = mapselector::plot_rcoleo_sites,
+                                       rcoleo_sites_sf = psites,
+                                       site_id_col = "Nom.de.la.cellule")
   
   
   sample_data <- select_top_n_df_input(tableauchangementstemporels::data_with_region,
