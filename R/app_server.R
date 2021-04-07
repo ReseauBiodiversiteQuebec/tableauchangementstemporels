@@ -41,7 +41,8 @@ app_server <- function( input, output, session ) {
   
   # bat sites ---------------------------------------------------------------
   
-  rcoleo_sites_sf <- rcoleo::download_sites_sf()
+  ## replace with mapselector::subset_site_df
+  rcoleo_sites_sf <- rcoleo::download_sites_sf(token = rcoleo:::bearer())
   # filter only for those sites with bat data
   acous <- rcoleo:::query_gen("campaigns", list(type = "acoustique"))
   
