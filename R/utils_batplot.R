@@ -21,7 +21,7 @@ testapp_bat_maps <- function(){
                           rcoleo_sites_sf = rcoleo_sites_bats)
     
 
-    ff <- reactive({get_subset_site(site = rcoleo_sites_bats,
+    ff <- reactive({mapselector:::get_subset_site(site = rcoleo_sites_bats,
                               site_code_sel = selsite())})
     
     output$sel <- renderTable(head(ff()))

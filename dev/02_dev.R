@@ -25,7 +25,6 @@ usethis::use_package("assertthat")
 usethis::use_package("lubridate")
 usethis::use_package("purrr")
 usethis::use_package("patchwork")
-usethis::use_dev_package("fontawesome", remote = "rstudio/fontawesome")
 
 ## Add modules ----
 ## Create a module infrastructure in R/
