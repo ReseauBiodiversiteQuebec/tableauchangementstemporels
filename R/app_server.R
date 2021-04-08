@@ -51,7 +51,7 @@ app_server <- function( input, output, session ) {
   
   chosen_site <- mod_map_select_server("bat_map",
                                        what_to_click = "marker",
-                                       fun = mapselector::plot_rcoleo_sites,
+                                       fun = plot_rcoleo_sites,
                                        rcoleo_sites_sf = rcoleo_sites_bats)
   
   mod_observation_display_server("siteobs", 
