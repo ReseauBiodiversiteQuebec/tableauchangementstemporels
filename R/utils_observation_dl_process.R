@@ -220,13 +220,19 @@ plot_both_together <- function(site_selected, gantt_df, count_df){
   })
 }
 
-plot_some_bats <- function(site_selected, bat_df){
+#' function to make filled area figure for bats
+#'
+#' @param bat_df data frame for making the area figure
+#'
+#' @return
+#' @importFrom magrittr %>%
+#' @export
+plot_some_bats <- function(bat_df){
   # browser()
-  plotly::renderPlotly({
+  # plotly::renderPlotly({
     p <- 
-      ggplot2::ggplot(
-        subset(bat_df, bat_df$Nom.de.la.cellule == site_selected())) +
-      ggplot2::aes(x = wk, y = n, fill = match, text = match) + 
+      ggplot2::ggplot(bat_df) +
+      ggplot2::aes(x = wk, y = n, fill = taxa, text = taxa) + 
       ggplot2::geom_area() + 
       ggplot2::scale_fill_brewer(palette = "Dark2") + 
       ggplot2::guides(fill = FALSE) + 
@@ -237,6 +243,18 @@ plot_some_bats <- function(site_selected, bat_df){
       plotly::layout(legend = list(orientation = 'h',
                                    x = 0, 
                                    y = -0.4))
-  })  
+  # })  
   
+}
+
+#' function that takes a data frame and spits out a plot
+#' 
+#' @importFrom magrittr %>%
+#' @export
+#' 
+process_plot_bats <- function(bat_df){
+  bat_df %>% 
+    count_day_species() %>% 
+    complete_weeks %>% 
+    plot_some_bats
 }

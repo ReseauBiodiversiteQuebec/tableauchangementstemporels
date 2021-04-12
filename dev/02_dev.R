@@ -57,6 +57,7 @@ usethis::use_test( "app" )
 ## Vignette ----
 usethis::use_vignette("adding_space")
 usethis::use_vignette("format_gantt")
+usethis::use_vignette("plot_some_bats")
 devtools::build_vignettes()
 
 ## Code Coverage----
