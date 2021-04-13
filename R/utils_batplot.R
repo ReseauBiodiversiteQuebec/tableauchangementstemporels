@@ -2,7 +2,7 @@
 # simple demo function for testing the icon plotting
 testapp_bat_maps <- function(){
   ui <- fluidPage(
-    fa_dependency(),
+    mapselector::fa_dependency(),
     mapselector::mod_map_select_ui("bat_map"),
     verbatimTextOutput("sel")
   )
@@ -29,7 +29,7 @@ testapp_bat_maps <- function(){
   shinyApp(ui, server)
 }
 
-testapp_bat_maps()
+# testapp_bat_maps()
 
 
 
