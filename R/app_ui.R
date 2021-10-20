@@ -10,8 +10,8 @@ app_ui <- function(request) {
     # Leave this function for adding external resources
     golem_add_external_resources(),
     tableau_de_bord(
-      dash_title(title = "Changements temporels"), 
       dash_sidebar(
+      dash_title(title = "Changements temporels",icon="nature-cute-028-tree"), 
         badge(
           text_badge = "
     Les données scientifiques recueillies par les citoyens nous donnent des informations précieuses sur la biodiversité québécoise."
