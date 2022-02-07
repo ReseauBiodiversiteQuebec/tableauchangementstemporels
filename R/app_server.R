@@ -60,6 +60,8 @@ app_server <- function( input, output, session ) {
   to_show <- reactive({mapselector::get_subset_site(site = rcoleo_sites_bats, 
                                                     site_code_sel = chosen_site())})
   
+
+  
   mod_modal_make_server("modal_make_ui_bats", 
                         region = chosen_site,
                         title_format_pattern = "Les chauves-souris de la region %s",
@@ -70,8 +72,11 @@ app_server <- function( input, output, session ) {
                                    df_to_plot(
                                      to_show()
                                    ))),
-                        tabPanel(title = "Observations",
-                                 mod_observation_display_ui("siteobs")
+                        tabPanel(title = "dotplot",
+                                 shiny::renderPlot(
+                                   df_to_dotplot(
+                                     to_show()
+                                   ))
                         )
   )
 

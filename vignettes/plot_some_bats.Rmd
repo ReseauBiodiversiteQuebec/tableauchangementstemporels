@@ -1,0 +1,136 @@
+---
+title: "plot_some_bats"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{plot_some_bats}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(tableauchangementstemporels)
+library(leaflet)
+suppressPackageStartupMessages(library(tidyverse))
+
+# get all the coleo sites
+rcoleo_sites_sf <- rcoleo::download_sites_sf(token = rcoleo:::bearer())
+  
+rcoleo_sites_bats <- mapselector::subset_site_df(downloaded_sites = rcoleo_sites_sf,
+                                                 campaign_type = "acoustique")
+
+one_site_bats <- mapselector::get_subset_site(site = rcoleo_sites_bats, 
+                             site_code_sel = "141_108_F01")
+
+```
+
+
+```{r, eval=FALSE}
+tableauchangementstemporels::df_to_plot(one_site_bats)
+```
+
+```{r}
+glimpse(one_site_bats)
+```
+
+combien des des especes!?
+
+```{r}
+one_site_bats %>% 
+  count(obs_species.taxa_name)
+```
+
+work with most common (complex) spp
+
+```{r}
+one_site_day_tally <- one_site_bats %>% 
+  mutate(date_fmt = lubridate::ymd(date_obs)) %>% 
+  group_by(date_fmt, obs_species.taxa_name) %>% 
+  tally 
+
+one_site_day_tally%>% 
+  filter(obs_species.taxa_name == "Eptesicus fuscus|Lasionycteris noctivagans") %>%
+  ggplot(aes(x = date_fmt, y = n)) + geom_point()
+```
+
+
+group by weeks??
+
+```{r}
+one_site_day_tally %>% 
+  mutate(wk = lubridate::week(date_fmt)) %>% 
+  group_by(wk, obs_species.taxa_name) %>% 
+  tally %>% 
+  ggplot(aes(x = wk, y = n)) + 
+  geom_line() + facet_wrap(~obs_species.taxa_name)
+```
+
+complete the bat data
+
+```{r}
+
+one_site_complete_bats <- one_site_day_tally %>% 
+  rename(date_obs = date_fmt,
+         taxa = obs_species.taxa_name) %>%
+  ungroup %>% 
+  dplyr::mutate(wk = lubridate::week(date_obs)) %>% 
+  dplyr::group_by(taxa, wk) %>% 
+  dplyr::tally(.) %>% 
+  ungroup %>% 
+  tidyr::complete(taxa, wk = 16:41,
+                  fill = list(n = 0))
+```
+
+```{r}
+one_site_complete_bats %>% 
+  ggplot(aes(x = wk, y = n)) + 
+  geom_line() + facet_wrap(~taxa)
+```
+
+
+```{r}
+library(ggridges)
+
+one_site_complete_bats %>% 
+  ggplot(aes(x = wk, y = taxa, height = n)) + 
+  geom_ridgeline()
+
+```
+
+Experiment with dotcharts
+
+```{r}
+# from the examples
+ggplot(mtcars, aes(x = mpg, fill = factor(cyl))) +
+  geom_dotplot(stackgroups = TRUE, binwidth = 1, binpositions = "all")
+```
+
+```{r}
+one_site_bats %>% 
+  mutate(date_fmt = lubridate::ymd(date_obs),
+         wk = lubridate::week(date_fmt)) %>% 
+  select(wk, taxa = obs_species.taxa_name) %>% 
+  distinct %>% 
+  ggplot(aes(x = wk, fill = taxa)) + 
+  geom_dotplot(stackgroups = TRUE, binwidth = 1, binpositions = "all") + 
+  scale_fill_brewer(palette = "Dark2")
+```
+
+What is the range of the date?
+
+```{r}
+one_site_bats %>% 
+  mutate(date_fmt = lubridate::ymd(date_obs),
+         wk = lubridate::week(date_fmt)) %>% pull(date_fmt) %>% range()
+```
+
+bat identification depends the specific kind of sound recorded used. Modern recorders can seperate some trick 
+

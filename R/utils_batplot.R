@@ -66,6 +66,7 @@ complete_weeks <- function(count_day_spp_df){
     dplyr::mutate(wk = lubridate::week(date_obs)) %>% 
     dplyr::group_by(taxa, wk) %>% 
     dplyr::tally(.) %>% 
+    dplyr::ungroup(.) %>% 
     tidyr::complete(taxa, wk = 16:41,
              fill = list(n = 0))
   
@@ -89,4 +90,16 @@ df_to_plot <- function(df){
   
   complete_bats %>% 
     plot_some_bats(.)
+}
+
+
+df_to_dotplot <- function(df){
+  df %>% 
+    dplyr::mutate(date_fmt = lubridate::ymd(date_obs),
+           wk = lubridate::week(date_fmt)) %>% 
+    dplyr::select(wk, taxa = obs_species.taxa_name) %>% 
+    dplyr::distinct(.) %>% 
+    ggplot2::ggplot(ggplot2::aes(x = wk, fill = taxa)) + 
+    ggplot2::geom_dotplot(stackgroups = TRUE, binwidth = 1, binpositions = "all") + 
+    ggplot2::scale_fill_brewer(palette = "Dark2")
 }
