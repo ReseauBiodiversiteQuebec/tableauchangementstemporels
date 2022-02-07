@@ -11,28 +11,28 @@ app_ui <- function(request) {
     golem_add_external_resources(),
     tableau_de_bord(
       dash_sidebar(
-      dash_title(title = "Changements temporels",icon="nature-cute-028-tree"), 
+        dash_title(title = "Changements temporels",icon="nature-cute-028-tree"), 
         badge(
           text_badge = "
     Les données scientifiques recueillies par les citoyens nous donnent des informations précieuses sur la biodiversité québécoise."
-# <br><br>
-# Ce tableau de bord indique quels animaux ont été vus dans quelles régions du Québec.
-# <br><br>
-# Il indique également <b>quand</b> cette information a été recueillie. Les animaux et les plantes sont moins actifs en hiver, et plus actifs en été. En explorant ces données, n'oubliez pas : il en va de même pour les personnes qui les observent !
-#     "
+    # <br><br>
+    # Ce tableau de bord indique quels animaux ont été vus dans quelles régions du Québec.
+    # <br><br>
+    # Il indique également <b>quand</b> cette information a été recueillie. Les animaux et les plantes sont moins actifs en hiver, et plus actifs en été. En explorant ces données, n'oubliez pas : il en va de même pour les personnes qui les observent !
+    #     "
         )#,
-        # checkboxGroupInput("group",
-        #             "Groupes d'organismes:",
-        #             choices = c("mammals", "birds", "plants", "other"),
-        #             selected = c("mammals", "birds", "plants", "other")),
-        # numericInput("number_obs",
-        #              "Pour combien des especes?", 
-        #              value = 10)
+    # checkboxGroupInput("group",
+    #             "Groupes d'organismes:",
+    #             choices = c("mammals", "birds", "plants", "other"),
+    #             selected = c("mammals", "birds", "plants", "other"))
+    # numericInput("number_obs",
+    #              "Pour combien des especes?", 
+    #              value = 10)
       ), 
-      dash_tabs(
-        #maybe a little strange, but here we pass in the UI of a modal and the id that defines it.
-        tab_map(title = "ATLAS", id = "reg_map", outputFunction = mod_map_select_ui),
-        tab_map(title = "COLEO", id = 'bat_map', outputFunction = mod_map_select_ui))
+    dash_tabs(
+      #maybe a little strange, but here we pass in the UI of a modal and the id that defines it.
+      tab_map(title = "ATLAS", id = "reg_map", outputFunction = mod_map_select_ui),
+      tab_map(title = "COLEO", id = 'bat_map', outputFunction = mod_map_select_ui))
     )
   )
 }

@@ -235,7 +235,7 @@ plot_some_bats <- function(bat_df){
       ggplot2::aes(x = wk, y = n, fill = taxa, text = taxa) + 
       ggplot2::geom_area() + 
       ggplot2::scale_fill_brewer(palette = "Dark2") + 
-      ggplot2::guides(fill = FALSE) + 
+      ggplot2::guides(fill = "none") + 
       ggplot2::theme_bw() +
       ggplot2::labs(y = "Chiropteres observés", x = "Semaine de l'année")
     
