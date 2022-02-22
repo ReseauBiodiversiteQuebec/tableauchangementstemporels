@@ -16,121 +16,516 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
-library(tableauchangementstemporels)
-library(leaflet)
-suppressPackageStartupMessages(library(tidyverse))
+```{r setup, echo=FALSE}
+# Notes on getting data
+
+# library(tableauchangementstemporels)
+# library(leaflet)
+# suppressPackageStartupMessages(library(tidyverse))
+# 
+# # get all the coleo sites
+# rcoleo_sites_sf <- rcoleo::download_sites_sf(token = rcoleo:::bearer())
+#   
+# rcoleo_sites_bats <- mapselector::subset_site_df(downloaded_sites = rcoleo_sites_sf,
+#                                                  campaign_type = "acoustique")
+# 
+# one_site_bats <- mapselector::get_subset_site(site = rcoleo_sites_bats, 
+#                                               site_code_sel = "141_108_F01") #|>
+# #  dplyr::mutate(site = "141_108_F01")
+# 
+# # Get pheno data
+# bats_pheno_site <- 
+#   rcoleo::get_gen('/species_arrival_departure', query=list('campaign_type'='acoustique')) |>
+#   dplyr::mutate(min_date = lubridate::ymd(min_date),
+#          max_date = lubridate::ymd(max_date),
+#          min_yd = lubridate::yday(min_date),
+#          max_yd = lubridate::yday(max_date),
+#          min_d = lubridate::day(min_date),
+#          max_d = lubridate::day(max_date),
+#          Taxon = factor(taxa_name),
+#          ## Compute presence time
+#          pres = (lubridate::interval(min_date, max_date) / lubridate::days(1))+1) |>
+#   dplyr::select(Taxon, min_yd, max_yd, pres, min_d, max_d, min_date, site = site_code) |>
+#     ## Select one site
+#   dplyr::filter(site == "141_108_F01") 
+# 
+#   ## Order species
+# bats_pheno_site$Taxon <-
+#   reorder(bats_pheno_site$Taxon, bats_pheno_site$pres)
+# 
+# # Dates
+# mth_breaks <-
+#   bats_pheno_site |> 
+#   # Complete weeks and months to have a full year represented
+#   dplyr::mutate(date = lubridate::ymd(min_date)) |>
+#   dplyr::select(date) |>
+#   tidyr::complete(date = lubridate::ymd(seq.Date(lubridate::dmy("01-01-2000"),
+#                                                  lubridate::dmy("31-12-2000"), by="week"))) |>
+#   dplyr::mutate(day = lubridate::yday(date),
+#                 wk = lubridate::week(date),
+#                 mth = lubridate::month(date,label=TRUE,abbr=TRUE)) |>
+#   dplyr::distinct() |>
+#   dplyr::group_by(mth) |>
+#   dplyr::summarise(wk = min(wk), day = min(day)) |>
+#   dplyr::mutate(mois = c("Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Aout", "Septembre","Octobre", "Novembre", "Décembre"))
+```
+
+
+
+## Phénologie par espèces
+
+```{r, fig.asp = 0.8, fig.width = 10, out.width="100%"}
+#==============
+# Choose a site
+site = "141_108_F01"
+ordre = "jours_de_presence" # C("jours_de_presence", "premiere_obs")
+#===============
+
+# Get pheno data
+bats_pheno_site <- 
+  rcoleo::get_gen('/species_arrival_departure', query=list('campaign_type'='acoustique')) |>
+  dplyr::mutate(min_date = lubridate::ymd(min_date),
+         max_date = lubridate::ymd(max_date),
+         min_yd = lubridate::yday(min_date),
+         max_yd = lubridate::yday(max_date),
+         min_d = lubridate::day(min_date),
+         max_d = lubridate::day(max_date),
+         Taxon = factor(taxa_name),
+         ## Compute presence time
+         pres = (lubridate::interval(min_date, max_date) / lubridate::days(1))+1) |>
+  dplyr::select(Taxon, min_yd, max_yd, pres, min_d, max_d, min_date, site_code) |>
+    ## Select one site
+  dplyr::filter(site_code == site)
+
+# Order species
+if(ordre == "premiere_obs") {
+  bats_pheno_site$Taxon <- reorder(bats_pheno_site$Taxon, -bats_pheno_site$min_yd)
+} else if(ordre == "jours_de_presence") {
+  bats_pheno_site$Taxon <- reorder(bats_pheno_site$Taxon, bats_pheno_site$pres)
+}
+
+bats_pheno_site$Taxon <- droplevels(bats_pheno_site$Taxon)
+
+# Dates
+mth_breaks <-
+  bats_pheno_site |> 
+  # Complete weeks and months to have a full year represented
+  dplyr::mutate(date = lubridate::ymd(min_date)) |>
+  dplyr::select(date) |>
+  tidyr::complete(date = lubridate::ymd(seq.Date(lubridate::dmy("01-01-2000"),
+                                                 lubridate::dmy("31-12-2000"), by="week"))) |>
+  dplyr::mutate(day = lubridate::yday(date),
+                wk = lubridate::week(date),
+                mth = lubridate::month(date,label=TRUE,abbr=TRUE)) |>
+  dplyr::distinct() |>
+  dplyr::group_by(mth) |>
+  dplyr::summarise(wk = min(wk), day = min(day)) |>
+  dplyr::mutate(mois = c("Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Aout", "Septembre","Octobre", "Novembre", "Décembre"))
+
+# colors
+first <- rgb(0.18,0.545,0.341,0.8)
+last <- rgb(0.7,0.2,0.1,0.8)
+
+# Plot
+## Inspired by https://towardsdatascience.com/create-dumbbell-plots-to-visualize-group-differences-in-r-3536b7d0a19a
+bats_pheno_site |>
+  ggplot2::ggplot() +
+  ## Add horizontal grey lines
+  ggplot2::geom_segment(
+    ggplot2::aes(y=Taxon, yend=Taxon, x=0, xend=366),
+    color="#b2b2b2", size=0.15) +
+  ggplot2::scale_y_discrete(expand = c(0,1.2)) +
+    ## Add horizontal grey lines
+  ggplot2::geom_segment(
+    ggplot2::aes(y=Taxon, yend=Taxon, x=min_yd, xend=max_yd), color="grey", size=1.5) +
+  ## Add first observation points
+  ggplot2::geom_point(ggplot2::aes(y=Taxon, x=min_yd), size=3, colour = first) +
+  ## Add last observation points
+  ggplot2::geom_point(ggplot2::aes(y=Taxon, x=max_yd), size=3, colour = last) +
+  ## Labels
+  ggplot2::geom_text(
+    data=dplyr::filter(bats_pheno_site, bats_pheno_site$Taxon==tail(levels(bats_pheno_site$Taxon), n=1)),
+    ggplot2::aes(x=max_yd, y=Taxon, label="Dernière\nobservation"),
+    color=last, size=3, vjust=-0.5, fontface="bold") +
+  ggplot2::geom_text(
+    data=dplyr::filter(bats_pheno_site, bats_pheno_site$Taxon==tail(levels(bats_pheno_site$Taxon), n=1)),
+    ggplot2::aes(x=min_yd, y=Taxon, label="Première\nobservation"),
+    color=first, size=3, vjust=-0.5, fontface="bold") +
+  ## Add presence column
+  ggplot2::geom_rect(
+    ggplot2::aes(xmin=275, xmax=350, ymin=-Inf, ymax=Inf), fill="grey") +
+  ggplot2::geom_text(
+    ggplot2::aes(label=pres, y=Taxon, x=312.5), fontface="bold", size=3) +
+  ggplot2::geom_text(
+    data=dplyr::filter(bats_pheno_site, bats_pheno_site$Taxon==tail(levels(bats_pheno_site$Taxon), n=1)),
+    ggplot2::aes(x=312.5, y=Taxon, label="Jours de présence"),
+    color="black", size=3.1, vjust=-2, fontface="bold") +
+  ## Add labels to values
+  # ggplot2::geom_text(
+  #   ggplot2::aes(x=min_wk, y=Taxon, label=min_d),
+  #   color=first, size=2.75, vjust=2.5) +
+  # ggplot2::geom_text(
+  #   ggplot2::aes(x=max_wk, y=Taxon, label=max_d),
+  #   color=last, size=2.75, vjust=2.5) +
+  # Add presence column
+    ggplot2::scale_x_continuous(breaks = mth_breaks$day,
+                     limits = c(1,366),
+                     labels = mth_breaks$mois,
+                     minor_breaks = c(1:366)[!c(1:366) %in% mth_breaks$day],
+                     expand = c(0, 0)) +
+  #ggplot2::scale_y_discrete(expand=c(0.2,0)) +
+  ggplot2::theme_bw() +
+  ggplot2::theme(
+    axis.text.x = ggplot2::element_text(margin=ggplot2::margin(10,0,0,0), angle = 30, vjust = 1, hjust = 1),
+    panel.grid.major.y = ggplot2::element_blank(),
+    panel.grid.minor.y = ggplot2::element_blank(),
+    panel.grid.major.x = ggplot2::element_line(colour = "lightgrey", size = 0.1),
+    panel.grid.minor.x = ggplot2::element_blank(),
+    panel.border=ggplot2::element_blank(),
+    axis.ticks=ggplot2::element_blank(),
+    axis.title.x=ggplot2::element_blank(),
+    axis.title.y=ggplot2::element_blank()
+    #axis.text.x=ggplot2::element_blank()
+    )
+```
+
+```{r}
+# Table info
+
+# Data
+# get all the coleo sites
+obs_site <- rcoleo::download_sites_sf(token = rcoleo:::bearer()) |>
+  mapselector::subset_site_df(campaign_type = "acoustique") |>
+  mapselector::get_subset_site(site_code_sel = site) 
+
+# Table campagne (voir coleo)
+
+# Table Variables:
+## Période temporelle
+periode_temporelle <- lubridate::year(range(bats_pheno_site$min_date))
+periode_temporelle <- paste(periode_temporelle[1], "à", periode_temporelle[2])
+
+periode_temporelle
+
+## jour max observations
+day_max <- obs_site$date_obs |>
+  lubridate::ymd() |>
+  lubridate::yday() |>
+  table() |>
+  which.max() |>
+  names() |>
+  as.numeric() |>
+  as.Date(origin = "2016-01-01") 
+month <- lubridate::month(day_max, label=TRUE, abbr = TRUE)
+month_df <- data.frame(month = c("Jan", "Feb", "Mar" , "Apr" , "May" , "Jun" , "Jul" , "Aug" , "Sep" , "Oct" , "Nov" , "Dec"),
+                       mois = c("Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Aout", "Septembre","Octobre", "Novembre", "Décembre"))
+mois <- month_df[month_df$month==month, "mois"]
+jour <- lubridate::mday(day_max)
+jour_max <- paste(jour, mois)
+
+jour_max
+
+## Heure max observations
+hour_max <- 
+  sapply(strsplit(obs_site$time_obs,split=":"), function(x) x[1]) |>
+  table() |>
+  which.max() |>
+  names()
+hour_max <- paste0(hour_max, "h")
+
+hour_max
+```
+
+
+
+## Phénologie par site
+
+```{r, fig.asp = 0.8,fig.width = 10, out.width="100%"}
+#==============
+# Choose your representation
+taxa = "Eptesicus fuscus"
+annee = "2018"
+ordre = "lat" # C("lat", "type_site", "premiere_obs")
+#===============
+
+# Get pheno data
+bat_pheno_sites <- 
+  rcoleo::get_gen('/species_arrival_departure', query=list('campaign_type'='acoustique')) |>
+  dplyr::mutate(min_date = lubridate::ymd(min_date),
+         max_date = lubridate::ymd(max_date),
+         min_yd = lubridate::yday(min_date),
+         max_yd = lubridate::yday(max_date),
+         min_d = lubridate::day(min_date),
+         max_d = lubridate::day(max_date),
+         Taxon = factor(taxa_name),
+         ## Compute presence time
+         pres = (lubridate::interval(min_date, max_date) / lubridate::days(1))+1) |>
+  dplyr::select(Taxon, min_yd, max_yd, pres, min_d, max_d, min_date, site_code) |>
+    ## Select one site
+  dplyr::filter(Taxon == taxa) |>
+  ## Select year
+  dplyr::filter(lubridate::year(min_date) == annee)
+
+# Add latitude data to bats_pheno_site
+rcoleo_sites_bats <- rcoleo::download_sites_sf(token = rcoleo:::bearer()) |>
+  mapselector::add_site_name_df() |>
+  mapselector::subset_site_df(campaign_type = "acoustique") |>
+  dplyr::mutate(lat = sf::st_coordinates(geom.coordinates)[,"Y"]) |>
+  as.data.frame() |>
+  dplyr::select(site_code, display_name, cell.name, type, lat)
+
+# Order sites according to latitude
+bat_pheno_sites <-
+  bat_pheno_sites |>
+  dplyr::left_join(rcoleo_sites_bats, by = "site_code")
+
+  
+# Order species
+if(ordre == "lat") {
+  bat_pheno_sites$display_name <- reorder(bat_pheno_sites$display_name, -bat_pheno_sites$lat)
+}else if(ordre == "type_site") {
+  bat_pheno_sites$type <- factor(bat_pheno_sites$type, levels = unique(bat_pheno_sites$type))
+  bat_pheno_sites <- bat_pheno_sites[order(bat_pheno_sites$type, -bat_pheno_sites$min_yd),]
+  bat_pheno_sites$display_name <- reorder(bat_pheno_sites$display_name, seq_along(bat_pheno_sites$display_name))
+}else if(ordre == "premiere_obs") {
+  bat_pheno_sites$display_name <- reorder(bat_pheno_sites$display_name, -bat_pheno_sites$min_yd)
+}
+
+# Dates
+mth_breaks <-
+  bat_pheno_sites |> 
+  # Complete weeks and months to have a full year represented
+  dplyr::mutate(date = lubridate::ymd(min_date)) |>
+  dplyr::select(date) |>
+  tidyr::complete(date = lubridate::ymd(seq.Date(lubridate::dmy("01-01-2000"),
+                                                 lubridate::dmy("31-12-2000"), by="week"))) |>
+  dplyr::mutate(day = lubridate::yday(date),
+                wk = lubridate::week(date),
+                mth = lubridate::month(date,label=TRUE,abbr=TRUE)) |>
+  dplyr::distinct() |>
+  dplyr::group_by(mth) |>
+  dplyr::summarise(wk = min(wk), day = min(day)) |>
+  dplyr::mutate(mois = c("Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Aout", "Septembre","Octobre", "Novembre", "Décembre"))
+
+# colors
+first <- rgb(0.18,0.545,0.341,0.8)
+last <- rgb(0.7,0.2,0.1,0.8)
+
+# Plot
+## Inspired by https://towardsdatascience.com/create-dumbbell-plots-to-visualize-group-differences-in-r-3536b7d0a19a
+bat_pheno_sites |>
+  ggplot2::ggplot() +
+  ## Add horizontal grey lines
+  ggplot2::geom_segment(
+    ggplot2::aes(y=display_name, yend=display_name, x=min_yd, xend=max_yd), color="grey", size=1.5) +
+  ## Add first observation points
+  ggplot2::geom_point(ggplot2::aes(y=display_name, x=min_yd), size=3, colour = first) +
+  ## Add last observation points
+  ggplot2::geom_point(ggplot2::aes(y=display_name, x=max_yd), size=3, colour = last) +
+  ggplot2::scale_y_discrete(expand = c(0,1.2)) +
+  ## Labels
+  ggplot2::geom_text(
+    data=dplyr::filter(bat_pheno_sites, bat_pheno_sites$display_name==tail(levels(bat_pheno_sites$display_name), n=1)),
+    ggplot2::aes(x=max_yd, y=display_name, label="Dernière\nobservation"),
+    color=last, size=3, vjust=-0.5, fontface="bold") +
+  ggplot2::geom_text(
+    data=dplyr::filter(bat_pheno_sites, bat_pheno_sites$display_name==tail(levels(bat_pheno_sites$display_name), n=1)),
+    ggplot2::aes(x=min_yd, y=display_name, label="Première\nobservation"),
+    color=first, size=3, vjust=-0.5, fontface="bold") +
+  ### Add presence column
+  ggplot2::geom_rect(
+    ggplot2::aes(xmin=275, xmax=350, ymin=-Inf, ymax=Inf), fill="grey") +
+  ggplot2::geom_text(
+    ggplot2::aes(label=pres, y=display_name, x=312.5), fontface="bold", size=3) +
+  ggplot2::geom_text(
+    data=dplyr::filter(bat_pheno_sites, bat_pheno_sites$display_name==tail(levels(bat_pheno_sites$display_name), n=1)), 
+    ggplot2::aes(x=312.5, y=display_name, label="Jours de présence"),
+    color="black", size=3.1, vjust=-2, fontface="bold") +
+  ## Add labels to values
+  # ggplot2::geom_text(
+  #   ggplot2::aes(x=min_wk, y=display_name, label=min_d),
+  #   color=first, size=2.75, vjust=2.5) +
+  # ggplot2::geom_text(
+  #   ggplot2::aes(x=max_wk, y=display_name, label=max_d),
+  #   color=last, size=2.75, vjust=2.5) +
+    ggplot2::scale_x_continuous(breaks = mth_breaks$day,
+                     limits = c(1,366),
+                     labels = mth_breaks$mois,
+                     minor_breaks = c(1:366)[!c(1:366) %in% mth_breaks$day],
+                     expand = c(0, 0)) +
+  #ggplot2::scale_y_discrete(expand=c(0.2,0)) +
+  ggplot2::theme_bw() +
+  ggplot2::theme(
+    axis.text.x = ggplot2::element_text(margin=ggplot2::margin(10,0,0,0), angle = 30, vjust = 1, hjust = 1),
+    panel.grid.major.y = ggplot2::element_blank(),
+    panel.grid.minor.y = ggplot2::element_blank(),
+    panel.grid.major.x = ggplot2::element_line(colour = "lightgrey", size = 0.1),
+    panel.grid.minor.x = ggplot2::element_blank(),
+    panel.border=ggplot2::element_blank(),
+    axis.ticks=ggplot2::element_blank(),
+    axis.title.x=ggplot2::element_blank(),
+    axis.title.y=ggplot2::element_blank()
+    )
+```
+
+
+## Phénologie et descripteur
+
+```{r, fig.asp = 0.8,fig.width = 7, out.width="100%"}
+#==============
+# Choose your representation
+taxa = "Eptesicus fuscus"
+site = "141_108_F01"
+annee = "2016"
+descripteur = "temp" # C("temp", "prec")
+#===============
+
+# Temp data
+temp   = mapselector::mean_temperature
+precip = mapselector::meteo_precipitation_ECMWF
+
+one_site_temp <-
+  temp |>
+  dplyr::group_by(Month) |>
+  dplyr::filter(nn == strsplit(site, "_")[[1]][1]) |>
+  dplyr::summarise(temp = mean(mean_deg_C))
+
+one_site_precip <-
+  precip |>
+  dplyr::group_by(Month) |>
+  dplyr::filter(nn == "141") |>
+  dplyr::rename(precip = total_mm) 
+
+one_site_clim <- 
+  dplyr::left_join(one_site_temp, one_site_precip, by = "Month") |>
+  dplyr::mutate(wk = lubridate::week(seq.Date(lubridate::dmy("01-01-2000"), lubridate::dmy("31-12-2000"), by="month")),
+                mth = lubridate::month(seq.Date(lubridate::dmy("01-01-2000"), lubridate::dmy("31-12-2000"), by="month"), label=TRUE,abbr=TRUE)) |>
+  dplyr::select(wk, temp, precip, mth)
+
+# Rename descriptor
+if(descripteur == "temp") {
+  one_site_clim <- one_site_clim |> dplyr::mutate(secVar = temp)
+}else if(descripteur == "prec") {
+  one_site_clim <- one_site_clim |> dplyr::mutate(secVar = precip)
+}
+# Scale descriptor
+one_site_clim <-
+  one_site_clim |>
+  dplyr::mutate(secVar_scaled = (secVar+abs(min(secVar, na.rm = TRUE)))/abs(max(secVar, na.rm = TRUE)))
+
 
 # get all the coleo sites
 rcoleo_sites_sf <- rcoleo::download_sites_sf(token = rcoleo:::bearer())
-  
 rcoleo_sites_bats <- mapselector::subset_site_df(downloaded_sites = rcoleo_sites_sf,
                                                  campaign_type = "acoustique")
-
 one_site_bats <- mapselector::get_subset_site(site = rcoleo_sites_bats, 
-                             site_code_sel = "141_108_F01")
+                                              site_code_sel = site) 
+
+# Get pheno data
+bat_pheno_sites <- 
+  rcoleo::get_gen('/species_arrival_departure', query=list('campaign_type'='acoustique')) |>
+  dplyr::mutate(min_date = lubridate::ymd(min_date),
+         max_date = lubridate::ymd(max_date),
+         min_yd = lubridate::yday(min_date),
+         max_yd = lubridate::yday(max_date),
+         min_d = lubridate::day(min_date),
+         max_d = lubridate::day(max_date),
+         Taxon = factor(taxa_name),
+         ## Compute presence time
+         pres = (lubridate::interval(min_date, max_date) / lubridate::days(1))+1) |>
+  dplyr::select(Taxon, min_yd, max_yd, pres, min_d, max_d, min_date, site_code) |>
+    ## Select one site
+  dplyr::filter(Taxon == taxa) |>
+  ## Select year
+  dplyr::filter(lubridate::year(min_date) == annee)
+
+  
+# Select Bat data
+weekly_one_bat <-
+  one_site_bats |>
+  # Select data chosen by user
+  dplyr::filter(lubridate::year(date_obs) == annee) |>
+  dplyr::filter(obs_species.taxa_name == taxa) |>
+  dplyr::mutate(date_fmt = lubridate::ymd(date_obs)) |>
+  dplyr::select(Taxon = obs_species.taxa_name, date_fmt) |>
+  # Get wk and mth
+  dplyr::mutate(wk = lubridate::week(date_fmt),
+         mth = lubridate::month(date_fmt,label=TRUE,abbr=TRUE)) |>
+  dplyr::select(wk, mth, Taxon)
+
+# Dates
+mth_breaks <-
+  bat_pheno_sites |> 
+  # Complete weeks and months to have a full year represented
+  dplyr::mutate(date = lubridate::ymd(min_date)) |>
+  dplyr::select(date) |>
+  tidyr::complete(date = lubridate::ymd(seq.Date(lubridate::dmy("01-01-2000"),
+                                                 lubridate::dmy("31-12-2000"), by="week"))) |>
+  dplyr::mutate(day = lubridate::yday(date),
+                wk = lubridate::week(date),
+                mth = lubridate::month(date,label=TRUE,abbr=TRUE)) |>
+  dplyr::distinct() |>
+  dplyr::group_by(mth) |>
+  dplyr::summarise(wk = min(wk), day = min(day)) |>
+  dplyr::mutate(mois = c("Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Aout", "Septembre","Octobre", "Novembre", "Décembre"))
+
+
+# Build the plot
+weekly_one_bat |>
+  dplyr::select(wk, Taxon) |>
+  #Plot
+  ggplot2::ggplot(ggplot2::aes(x = wk)) + 
+  ggplot2::geom_dotplot(ggplot2::aes(fill = Taxon), colour = "NA", stackgroups = TRUE, binwidth = 1, binpositions = "all", stackratio = 1.05, dotsize = 1) + 
+  ggplot2::geom_line(data=dplyr::select(one_site_clim, wk, secVar_scaled),
+                     ggplot2::aes(x=wk, y=secVar_scaled), color = "blue") +
+  ggplot2::xlab("") +
+  ggplot2::scale_x_continuous(breaks = mth_breaks$wk,
+                     limits = c(1,53),
+                     labels = c("Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Aout", "Septembre","Octobre", "Novembre", "Décembre"),
+                     minor_breaks = c(1:53)[!c(1:53) %in% mth_breaks],
+                     expand = c(0, 0)) +
+  ggplot2::scale_y_continuous(expand = c(0, 0), 
+                     # Features of the first axis
+                     name = "Abondance (nombre d'observations)",
+                     # Remove y axis ticks and labels
+                     breaks = 0,
+                     labels = "",
+                     # Add a second axis and specify its features
+                     sec.axis = ggplot2::sec_axis(trans = ~.*1, breaks = seq(0,2,0.5),
+                                                  labels = round(seq(min(one_site_clim$secVar, na.rm=TRUE), max(one_site_clim$secVar, na.rm=TRUE), length.out = 5)), 
+                                                  name="Température (°C)")
+  ) +
+  ggplot2::scale_fill_brewer(palette = "Dark2") +
+  # inspired by ggthemes theme_hc()
+ ggplot2::theme(rect = ggplot2::element_rect(linetype = 0, colour = NA),
+        #plot.margin = ggplot2::unit(c(1,1,1,1),"cm"),
+        #text = ggplot2::element_text(size = 16, family = 'sans'),
+        title = ggplot2::element_text(hjust = 0.5),
+        axis.title.x = ggplot2::element_text(vjust = 0.3),
+        axis.text.x = ggplot2::element_text(margin=ggplot2::margin(10,0,0,0), angle = 30, vjust = 1, hjust = 1),
+        axis.ticks.x = ggplot2::element_blank(),
+        #axis.title.y = element_text(hjust = 0.5),
+        #axis.text.y = ggplot2::element_blank(),
+       # axis.ticks.y = ggplot2::element_blank(),
+        panel.grid.major.y = ggplot2::element_blank(),
+        panel.grid.minor.y = ggplot2::element_blank(),
+        panel.grid.major.x = ggplot2::element_line(colour = "#D8D8D8", size = 1),
+        panel.grid.minor.x = ggplot2::element_line(colour = "#D8D8D8", size = 0.1),
+               panel.border = ggplot2::element_blank(),
+               panel.background = ggplot2::element_blank(),
+               legend.position = "none",
+               legend.key = ggplot2::element_rect(fill = "#FFFFFF00"))
+
 
 ```
 
 
-```{r, eval=FALSE}
-tableauchangementstemporels::df_to_plot(one_site_bats)
-```
-
-```{r}
-glimpse(one_site_bats)
-```
-
-combien des des especes!?
-
-```{r}
-one_site_bats %>% 
-  count(obs_species.taxa_name)
-```
-
-work with most common (complex) spp
-
-```{r}
-one_site_day_tally <- one_site_bats %>% 
-  mutate(date_fmt = lubridate::ymd(date_obs)) %>% 
-  group_by(date_fmt, obs_species.taxa_name) %>% 
-  tally 
-
-one_site_day_tally%>% 
-  filter(obs_species.taxa_name == "Eptesicus fuscus|Lasionycteris noctivagans") %>%
-  ggplot(aes(x = date_fmt, y = n)) + geom_point()
-```
 
 
-group by weeks??
-
-```{r}
-one_site_day_tally %>% 
-  mutate(wk = lubridate::week(date_fmt)) %>% 
-  group_by(wk, obs_species.taxa_name) %>% 
-  tally %>% 
-  ggplot(aes(x = wk, y = n)) + 
-  geom_line() + facet_wrap(~obs_species.taxa_name)
-```
-
-complete the bat data
-
-```{r}
-
-one_site_complete_bats <- one_site_day_tally %>% 
-  rename(date_obs = date_fmt,
-         taxa = obs_species.taxa_name) %>%
-  ungroup %>% 
-  dplyr::mutate(wk = lubridate::week(date_obs)) %>% 
-  dplyr::group_by(taxa, wk) %>% 
-  dplyr::tally(.) %>% 
-  ungroup %>% 
-  tidyr::complete(taxa, wk = 16:41,
-                  fill = list(n = 0))
-```
-
-```{r}
-one_site_complete_bats %>% 
-  ggplot(aes(x = wk, y = n)) + 
-  geom_line() + facet_wrap(~taxa)
-```
 
 
-```{r}
-library(ggridges)
 
-one_site_complete_bats %>% 
-  ggplot(aes(x = wk, y = taxa, height = n)) + 
-  geom_ridgeline()
 
-```
 
-Experiment with dotcharts
 
-```{r}
-# from the examples
-ggplot(mtcars, aes(x = mpg, fill = factor(cyl))) +
-  geom_dotplot(stackgroups = TRUE, binwidth = 1, binpositions = "all")
-```
-
-```{r}
-one_site_bats %>% 
-  mutate(date_fmt = lubridate::ymd(date_obs),
-         wk = lubridate::week(date_fmt)) %>% 
-  select(wk, taxa = obs_species.taxa_name) %>% 
-  distinct %>% 
-  ggplot(aes(x = wk, fill = taxa)) + 
-  geom_dotplot(stackgroups = TRUE, binwidth = 1, binpositions = "all") + 
-  scale_fill_brewer(palette = "Dark2")
-```
-
-What is the range of the date?
-
-```{r}
-one_site_bats %>% 
-  mutate(date_fmt = lubridate::ymd(date_obs),
-         wk = lubridate::week(date_fmt)) %>% pull(date_fmt) %>% range()
-```
-
-bat identification depends the specific kind of sound recorded used. Modern recorders can seperate some trick 
 
