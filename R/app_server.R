@@ -12,27 +12,13 @@ app_server <- function( input, output, session ) {
   # regional phenology ------------------------------------------------------
   
   
-  # Your application server logic 
-  chosen_region <- mod_map_select_server("reg_map",
-                                         what_to_click = "shape",
-                                         fun = make_leaflet_map,
-                                         # these are arguments to make_leaflet_map
-                                         mapdata = mapselector::CERQ,
-                                         label = TRUE,
-                                         region_name = "NOM_PROV_N")
-  
-  
   sample_data <- select_top_n_df_input(tableauchangementstemporels::data_with_region,
                                        .how_many_top = 7)
   
-  gantt_data <- format_for_gantt_figure(sample_data)
   
-  count_data <- format_for_count_figure(sample_data)
-  
-  
-  mod_modal_make_server("modal_make_ui_1", 
-                        region = chosen_region,
-                        title_format_pattern = "La phénologie pour la region %s",
+  mapselector::mod_modal_make_server("modal_make_ui_1", 
+                        region = chosen_site,
+                        title_format_pattern = "La phénologie pour le site %s",
                         # here place all the tabs you want in your final modal! 
                         ## this can be a function which returns a reactive output (e.g. renderPlotly)
                         tabPanel(title = "Visualization",
@@ -43,41 +29,37 @@ app_server <- function( input, output, session ) {
   # bat sites ---------------------------------------------------------------
   
   ## replace with mapselector::subset_site_df
-  rcoleo_sites_sf <- rcoleo::download_sites_sf(token = rcoleo:::bearer())
+  rcoleo_sites_sf <- rcoleo::download_sites_sf() |> mapselector::add_site_name_df() |> mapselector::subset_site_df(campaign_type = "acoustique")
   
-  rcoleo_sites_bats <- mapselector::subset_site_df(downloaded_sites = rcoleo_sites_sf,
-                              campaign_type = "acoustique")
-  
-  chosen_site <- mod_map_select_server("bat_map",
+  chosen_site <- mapselector::mod_map_select_server("bat_map",
                                        what_to_click = "marker",
-                                       fun = plot_rcoleo_sites,
-                                       rcoleo_sites_sf = rcoleo_sites_bats)
+                                       fun = mapselector::plot_rcoleo_sites,
+                                       rcoleo_sites_sf = rcoleo_sites_sf)
   
-  mod_observation_display_server("siteobs", 
-                                 site = rcoleo_sites_bats, 
-                                 region = chosen_site)
-  
-  to_show <- reactive({mapselector::get_subset_site(site = rcoleo_sites_bats, 
-                                                    site_code_sel = chosen_site())})
-  
+  bat_pheno_sites<-rcoleo::get_gen('/species_arrival_departure', query=list('campaign_type'='acoustique')) |>
+    dplyr::mutate(min_date = lubridate::ymd(min_date),
+                  max_date = lubridate::ymd(max_date),
+                  min_yd = lubridate::yday(min_date),
+                  max_yd = lubridate::yday(max_date),
+                  min_d = lubridate::day(min_date),
+                  max_d = lubridate::day(max_date),
+                  Taxon = factor(taxa_name),
+                  ## Compute presence time
+                  pres = (lubridate::interval(min_date, max_date) / lubridate::days(1))+1)
 
+  mod_pheno_sites_server('pheno_sites',rcoleo_sites_sf, bat_pheno_sites)
   
-  mod_modal_make_server("modal_make_ui_bats", 
+  clicked_site_name <- reactive({
+    req(chosen_site())
+    mapselector::make_site_name(got_clicked_site_val = chosen_site(), site_code_lookup)
+  })
+  
+  mod_pheno_species_server('pheno_species', clicked_site_name, chosen_site, rcoleo_sites_sf, bat_pheno_sites)
+  mapselector::mod_modal_make_server("modal_make_ui_bats", 
                         region = chosen_site,
-                        title_format_pattern = "Les chauves-souris de la region %s",
-                        # here place all the tabs you want in your final modal! 
-                        ## this can be a function which returns a reactive output (e.g. renderPlotly)
-                        tabPanel(title = "Visualization",
-                                 plotly::renderPlotly(
-                                   df_to_plot(
-                                     to_show()
-                                   ))),
-                        tabPanel(title = "dotplot",
-                                 shiny::renderPlot(
-                                   df_to_dotplot(
-                                     to_show()
-                                   ))
-                        )
+                        title_format_pattern = "La phénologie pour le site %s",
+                        tabPanel(title = "Chauves-souris",
+                                 mod_pheno_species_ui("pheno_species"))
   )
 
 }

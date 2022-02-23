@@ -9,10 +9,10 @@ app_ui <- function(request) {
   tagList(
     # Leave this function for adding external resources
     golem_add_external_resources(),
-    tableau_de_bord(
-      dash_sidebar(
-        dash_title(title = "Changements temporels",icon="nature-cute-028-tree"), 
-        badge(
+    mapselector::tableau_de_bord(
+      mapselector::dash_sidebar(
+        mapselector::dash_title(title = "Changements temporels",icon="nature-cute-028-tree"), 
+        mapselector::badge(
           text_badge = "
     Les données scientifiques recueillies par les citoyens nous donnent des informations précieuses sur la biodiversité québécoise."
     # <br><br>
@@ -29,10 +29,13 @@ app_ui <- function(request) {
     #              "Pour combien des especes?", 
     #              value = 10)
       ), 
-    dash_tabs(
+    mapselector::dash_tabs(
       #maybe a little strange, but here we pass in the UI of a modal and the id that defines it.
-      tab_map(title = "ATLAS", id = "reg_map", outputFunction = mod_map_select_ui),
-      tab_map(title = "COLEO", id = 'bat_map', outputFunction = mod_map_select_ui))
+      mapselector::tab_map(title = "COLEO", id = 'bat_map', outputFunction = mapselector::mod_map_select_ui),
+      mapselector::tab_gen(title = "Comparaison entre sites",
+                         outputFunction = mod_pheno_sites_ui,
+                         id = "pheno_sites")
+    )
     )
   )
 }
