@@ -23,6 +23,12 @@ mod_pheno_sites_ui <- function(id){
 mod_pheno_sites_server <- function(id, rcoleo_sites_sf, bat_pheno_sites){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
+    
+    #put in dropdown
+    taxa <- "Eptesicus fuscus"
+    annee <- "2016"
+    ordre <- "lat"
+    
     output$pheno_sites<-plotly::renderPlotly({
       bat_pheno_sites <- 
         bat_pheno_sites |>

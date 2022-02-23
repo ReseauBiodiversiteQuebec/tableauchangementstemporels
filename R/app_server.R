@@ -15,6 +15,13 @@ app_server <- function( input, output, session ) {
   sample_data <- select_top_n_df_input(tableauchangementstemporels::data_with_region,
                                        .how_many_top = 7)
   
+  ## replace with mapselector::subset_site_df
+  rcoleo_sites_sf <- rcoleo::download_sites_sf() |> mapselector::add_site_name_df() |> mapselector::subset_site_df(campaign_type = "acoustique")
+  
+  chosen_site <- mapselector::mod_map_select_server("bat_map",
+                                                    what_to_click = "marker",
+                                                    fun = mapselector::plot_rcoleo_sites,
+                                                    rcoleo_sites_sf = rcoleo_sites_sf)
   
   mapselector::mod_modal_make_server("modal_make_ui_1", 
                         region = chosen_site,
@@ -28,13 +35,7 @@ app_server <- function( input, output, session ) {
   
   # bat sites ---------------------------------------------------------------
   
-  ## replace with mapselector::subset_site_df
-  rcoleo_sites_sf <- rcoleo::download_sites_sf() |> mapselector::add_site_name_df() |> mapselector::subset_site_df(campaign_type = "acoustique")
-  
-  chosen_site <- mapselector::mod_map_select_server("bat_map",
-                                       what_to_click = "marker",
-                                       fun = mapselector::plot_rcoleo_sites,
-                                       rcoleo_sites_sf = rcoleo_sites_sf)
+
   
   bat_pheno_sites<-rcoleo::get_gen('/species_arrival_departure', query=list('campaign_type'='acoustique')) |>
     dplyr::mutate(min_date = lubridate::ymd(min_date),
