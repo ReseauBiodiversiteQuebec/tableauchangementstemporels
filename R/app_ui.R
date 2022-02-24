@@ -11,7 +11,7 @@ app_ui <- function(request) {
     golem_add_external_resources(),
     mapselector::tableau_de_bord(
       mapselector::dash_sidebar(
-        mapselector::dash_title(title = "Changements temporels",icon="nature-cute-028-tree"), 
+        mapselector::dash_title(title = "Phénologie des chauves souris",icon="nature-cute-028-tree"), 
         mapselector::badge(
           text_badge = "
     Les données scientifiques recueillies par les citoyens nous donnent des informations précieuses sur la biodiversité québécoise."

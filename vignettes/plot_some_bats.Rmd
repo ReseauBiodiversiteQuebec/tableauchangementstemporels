@@ -313,6 +313,7 @@ last <- rgb(0.7,0.2,0.1,0.8)
 
 # Plot
 ## Inspired by https://towardsdatascience.com/create-dumbbell-plots-to-visualize-group-differences-in-r-3536b7d0a19a
+ggplot <-
 bat_pheno_sites |>
   ggplot2::ggplot() +
   ## Add horizontal grey lines
@@ -366,6 +367,34 @@ bat_pheno_sites |>
     axis.title.x=ggplot2::element_blank(),
     axis.title.y=ggplot2::element_blank()
     )
+
+
+# Render avec ggigraph
+ggiraph::girafe(ggobj = ggplot)
+
+
+
+# # Render en plotly
+# ggplotly <- ggplot|>
+#         plotly::ggplotly() 
+# # Ajout des annotations
+# ggplotly2 <- plotly::add_annotations(ggplotly, 
+#                              x=312.5, 
+#                              y = length(levels(bat_pheno_sites$display_name))+0.3,
+#                              text = "Jours de présence",
+#                              xref = "x",
+#                              yref = "y",
+#                              showarrow = FALSE)
+# ggplotly2
+#   
+#   
+# ggplotly |>
+#   plotly::layout(shapes = list(list(
+#   type="rect",
+#   fillcolor="grey",
+#   x0=-Inf, x1=Inf, xref="x",
+#   y0=-Inf, y1=Inf, yref="y"
+# )))
 ```
 
 

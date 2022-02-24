@@ -10,7 +10,11 @@
 mod_pheno_species_ui <- function(id){
   ns <- NS(id)
   tagList(
-    selectInput(ns("ordre"),"Base de la comparaison",c("Jours de présence"='jours_de_presence', "Première observation"="premiere_obs")),plotly::plotlyOutput(ns("pheno_species"))
+    selectInput(
+      ns("ordre"),
+      "Ordre de comparaison",
+      c("Jours de présence"='jours_de_presence', "Première observation"="premiere_obs")),
+    ggiraph::girafeOutput(ns("pheno_species"))
   )
 }
 
@@ -18,15 +22,16 @@ mod_pheno_species_ui <- function(id){
 #'
 #' @param species_data sites x species count summary table
 #'
-mod_pheno_species_server <- function(id, site_name, site, rcoleo_sites_sf, bats_pheno_sites){
+mod_pheno_species_server <- function(id, site_name, site, rcoleo_sites_sf, bats_pheno){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    output$pheno_species<-plotly::renderPlotly({
+    output$pheno_species<-ggiraph::renderGirafe({
       
       ordre = input$ordre
 
-      bats_pheno_site <- bats_pheno_sites |>
-        dplyr::select(Taxon, min_yd, max_yd, pres, min_d, max_d, min_date, site_code) |>
+      bats_pheno_site <- bats_pheno |>
+        # dplyr::select(Taxon, min_yd, max_yd, pres, min_d, max_d, min_date, site_code) |>
+        ## Select one site
         dplyr::filter(site_code == site())
       
       # Order species
@@ -59,6 +64,7 @@ mod_pheno_species_server <- function(id, site_name, site, rcoleo_sites_sf, bats_
       last <- rgb(0.7,0.2,0.1,0.8)
       
       # Plot
+      ggplot <-
       ## Inspired by https://towardsdatascience.com/create-dumbbell-plots-to-visualize-group-differences-in-r-3536b7d0a19a
       bats_pheno_site |>
         ggplot2::ggplot() +
@@ -108,6 +114,7 @@ mod_pheno_species_server <- function(id, site_name, site, rcoleo_sites_sf, bats_
         #ggplot2::scale_y_discrete(expand=c(0.2,0)) +
         ggplot2::theme_bw() +
         ggplot2::theme(
+          #text = ggplot2::element_text(size = 16),
           axis.text.x = ggplot2::element_text(margin=ggplot2::margin(10,0,0,0), angle = 30, vjust = 1, hjust = 1),
           panel.grid.major.y = ggplot2::element_blank(),
           panel.grid.minor.y = ggplot2::element_blank(),
@@ -119,6 +126,11 @@ mod_pheno_species_server <- function(id, site_name, site, rcoleo_sites_sf, bats_
           axis.title.y=ggplot2::element_blank()
           #axis.text.x=ggplot2::element_blank()
         )
+      # Create giraph
+      ggiraph::girafe(ggobj = ggplot,
+                      width_svg = 10, 
+                      #height_svg = 9,
+                      options = list(ggiraph::opts_sizing(rescale = TRUE, width = 1)))
      })
   })
 }

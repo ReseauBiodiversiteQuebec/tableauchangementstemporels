@@ -37,25 +37,32 @@ app_server <- function( input, output, session ) {
   
 
   
-  bat_pheno_sites<-rcoleo::get_gen('/species_arrival_departure', query=list('campaign_type'='acoustique')) |>
-    dplyr::mutate(min_date = lubridate::ymd(min_date),
+  bats_pheno<-rcoleo::get_gen('/species_arrival_departure', query=list('campaign_type'='acoustique')) |>
+    dplyr::mutate(
+                  ## Get dates
+                  min_date = lubridate::ymd(min_date),
                   max_date = lubridate::ymd(max_date),
                   min_yd = lubridate::yday(min_date),
                   max_yd = lubridate::yday(max_date),
                   min_d = lubridate::day(min_date),
                   max_d = lubridate::day(max_date),
+                  ## Rename taxa name
                   Taxon = factor(taxa_name),
                   ## Compute presence time
-                  pres = (lubridate::interval(min_date, max_date) / lubridate::days(1))+1)
-
-  mod_pheno_sites_server('pheno_sites',rcoleo_sites_sf, bat_pheno_sites)
+                  pres = (lubridate::interval(min_date, max_date) / lubridate::days(1))+1) |>
+    # Select required columns
+    dplyr::select(Taxon, min_yd, max_yd, pres, min_d, max_d, min_date, site_code)
+  
+  ## Figure: Comparison of phenology between sites
+  mod_pheno_sites_server('pheno_sites',rcoleo_sites_sf, bats_pheno)
   
   clicked_site_name <- reactive({
     req(chosen_site())
     mapselector::make_site_name(got_clicked_site_val = chosen_site(), site_code_lookup)
   })
   
-  mod_pheno_species_server('pheno_species', clicked_site_name, chosen_site, rcoleo_sites_sf, bat_pheno_sites)
+  # Figure: Phenology at one site
+  mod_pheno_species_server('pheno_species', clicked_site_name, chosen_site, rcoleo_sites_sf, bats_pheno)
   mapselector::mod_modal_make_server("modal_make_ui_bats", 
                         region = chosen_site,
                         title_format_pattern = "La phénologie pour le site %s",

@@ -12,7 +12,26 @@
 mod_pheno_sites_ui <- function(id){
   ns <- NS(id)
   tagList(
-    shinycssloaders::withSpinner(plotly::plotlyOutput(ns("pheno_sites"),width='95%',height='95%'),proxy.height = '100%',color='#538887',type=7)
+    selectInput(ns("taxa"),"Taxon",c("Eptesicus fuscus" = "Eptesicus fuscus",
+                                                "Eptesicus fuscus|Lasionycteris noctivagans" = "Eptesicus fuscus|Lasionycteris noctivagans",
+                                                "Eptesicus fuscus|Lasiurus borealis" = "Eptesicus fuscus|Lasiurus borealis",
+                                                "Lasionycteris noctivagans" = "Lasionycteris noctivagans",
+                                                "Lasiurus borealis" = "Lasiurus borealis",
+                                                "Lasiurus cinereus" = "Lasiurus cinereus",
+                                                "Lasiurus cinereus|Lasionycteris noctivagans" = "Lasiurus cinereus|Lasionycteris noctivagans",
+                                                "Myotis lucifugus" = "Myotis lucifugus",
+                                                "Myotis lucifugus|Lasiurus borealis" = "Myotis lucifugus|Lasiurus borealis",
+                                                "Myotis lucifugus|Myotis septentrionalis|Myotis leibii" = "Myotis lucifugus|Myotis septentrionalis|Myotis leibii",
+                                                "Myotis septentrionalis" = "Myotis septentrionalis",
+                                                "Perimyotis subflavus" = "Perimyotis subflavus",
+                                                "Perimyotis subflavus|Myotis lucifugus" = "Perimyotis subflavus|Myotis lucifugus",
+                                                "Chiroptera" = "Chiroptera")),
+    selectInput(ns("annee"),"Année",c("2018"="2018","2017"="2017","2016"="2016")),
+    selectInput(ns("ordre"),"Ordre de comparaison",c("Jours de présence"='jours_de_presence',"Latitude"='lat', "Première observation"="premiere_obs", "Type de site"="type_site")),
+    shinycssloaders::withSpinner(
+      ggiraph::girafeOutput(ns("pheno_sites"),width='95%',height='50%'),
+      proxy.height = '200px',color='#538887',type=7
+      )
   )
 }
 
@@ -20,32 +39,11 @@ mod_pheno_sites_ui <- function(id){
 #'
 #' @param species_data sites x species count summary table
 #'
-mod_pheno_sites_server <- function(id, rcoleo_sites_sf, bat_pheno_sites){
-  moduleServer( id, function(input, output, session){
+mod_pheno_sites_server <- function(id, rcoleo_sites_sf, bats_pheno){
+  moduleServer(id, function(input, output, session){
     ns <- session$ns
     
-    #put in dropdown
-    taxa <- "Eptesicus fuscus"
-    annee <- "2016"
-    ordre <- "lat"
-    
-    output$pheno_sites<-plotly::renderPlotly({
-      bat_pheno_sites <- 
-        bat_pheno_sites |>
-        dplyr::mutate(min_date = lubridate::ymd(min_date),
-                      max_date = lubridate::ymd(max_date),
-                      min_yd = lubridate::yday(min_date),
-                      max_yd = lubridate::yday(max_date),
-                      min_d = lubridate::day(min_date),
-                      max_d = lubridate::day(max_date),
-                      Taxon = factor(taxa_name),
-                      ## Compute presence time
-                      pres = (lubridate::interval(min_date, max_date) / lubridate::days(1))+1) |>
-        dplyr::select(Taxon, min_yd, max_yd, pres, min_d, max_d, min_date, site_code) |>
-        ## Select one site
-        dplyr::filter(Taxon == taxa) |>
-        ## Select year
-        dplyr::filter(lubridate::year(min_date) == annee)
+    output$pheno_sites<-ggiraph::renderGirafe({ #plotly::renderPlotly({
       
       # Add latitude data to bats_pheno_site
       rcoleo_sites_bats <- rcoleo_sites_sf |>
@@ -53,21 +51,38 @@ mod_pheno_sites_server <- function(id, rcoleo_sites_sf, bat_pheno_sites){
         as.data.frame() |>
         dplyr::select(site_code, display_name, cell.name, type, lat)
       
-      # Order sites according to latitude
-      bat_pheno_sites <-
-        bat_pheno_sites |>
+      bat_pheno_sites <- 
+        bats_pheno |>
+        # ## Get dates
+        # dplyr::mutate(min_date = lubridate::ymd(min_date),
+        #               max_date = lubridate::ymd(max_date),
+        #               min_yd = lubridate::yday(min_date),
+        #               max_yd = lubridate::yday(max_date),
+        #               min_d = lubridate::day(min_date),
+        #               max_d = lubridate::day(max_date),
+        #               Taxon = factor(taxa_name),
+        #               ## Compute presence time
+        #               pres = (lubridate::interval(min_date, max_date) / lubridate::days(1))+1) |>
+        # dplyr::select(Taxon, min_yd, max_yd, pres, min_d, max_d, min_date, site_code) |>
+        ## Select one species
+        dplyr::filter(Taxon == input$taxa) |>
+        ## Select year
+        dplyr::filter(lubridate::year(min_date) == input$annee) |>
+        # Get site's latitude
         dplyr::left_join(rcoleo_sites_bats, by = "site_code")
       
       
       # Order species
-      if(ordre == "lat") {
+      if(input$ordre == "lat") {
         bat_pheno_sites$display_name <- reorder(bat_pheno_sites$display_name, -bat_pheno_sites$lat)
-      }else if(ordre == "type_site") {
+      }else if(input$ordre == "type_site") {
         bat_pheno_sites$type <- factor(bat_pheno_sites$type, levels = unique(bat_pheno_sites$type))
         bat_pheno_sites <- bat_pheno_sites[order(bat_pheno_sites$type, -bat_pheno_sites$min_yd),]
         bat_pheno_sites$display_name <- reorder(bat_pheno_sites$display_name, seq_along(bat_pheno_sites$display_name))
-      }else if(ordre == "premiere_obs") {
+      }else if(input$ordre == "premiere_obs") {
         bat_pheno_sites$display_name <- reorder(bat_pheno_sites$display_name, -bat_pheno_sites$min_yd)
+      }else if(input$ordre == "jours_de_presence") {
+        bat_pheno_sites$display_name <- reorder(bat_pheno_sites$display_name, bat_pheno_sites$pres)
       }
       
       # Dates
@@ -91,35 +106,36 @@ mod_pheno_sites_server <- function(id, rcoleo_sites_sf, bat_pheno_sites){
       last <- rgb(0.7,0.2,0.1,0.8)
       
       # Plot
+      ggplot <-
       ## Inspired by https://towardsdatascience.com/create-dumbbell-plots-to-visualize-group-differences-in-r-3536b7d0a19a
       bat_pheno_sites |>
         ggplot2::ggplot() +
         ## Add horizontal grey lines
         ggplot2::geom_segment(
-          ggplot2::aes(y=display_name, yend=display_name, x=min_yd, xend=max_yd), color="grey", size=1.5) +
+          ggplot2::aes(y=display_name, yend=display_name, x=min_yd, xend=max_yd), color="grey", size=1) +
         ## Add first observation points
-        ggplot2::geom_point(ggplot2::aes(y=display_name, x=min_yd), size=3, colour = first) +
+        ggplot2::geom_point(ggplot2::aes(y=display_name, x=min_yd), size=2, colour = first) +
         ## Add last observation points
-        ggplot2::geom_point(ggplot2::aes(y=display_name, x=max_yd), size=3, colour = last) +
+        ggplot2::geom_point(ggplot2::aes(y=display_name, x=max_yd), size=2, colour = last) +
         ggplot2::scale_y_discrete(expand = c(0,1.2)) +
-        ## Labels
-        ggplot2::geom_text(
-          data=dplyr::filter(bat_pheno_sites, bat_pheno_sites$display_name==tail(levels(bat_pheno_sites$display_name), n=1)),
-          ggplot2::aes(x=max_yd, y=display_name, label="Dernière\nobservation"),
-          color=last, size=3, vjust=-0.5, fontface="bold") +
-        ggplot2::geom_text(
-          data=dplyr::filter(bat_pheno_sites, bat_pheno_sites$display_name==tail(levels(bat_pheno_sites$display_name), n=1)),
-          ggplot2::aes(x=min_yd, y=display_name, label="Première\nobservation"),
-          color=first, size=3, vjust=-0.5, fontface="bold") +
         ### Add presence column
         ggplot2::geom_rect(
           ggplot2::aes(xmin=275, xmax=350, ymin=-Inf, ymax=Inf), fill="grey") +
         ggplot2::geom_text(
-          ggplot2::aes(label=pres, y=display_name, x=312.5), fontface="bold", size=3) +
+          ggplot2::aes(label=pres, y=display_name, x=312.5), fontface="bold", size=2) +
         ggplot2::geom_text(
           data=dplyr::filter(bat_pheno_sites, bat_pheno_sites$display_name==tail(levels(bat_pheno_sites$display_name), n=1)), 
           ggplot2::aes(x=312.5, y=display_name, label="Jours de présence"),
-          color="black", size=3.1, vjust=-2, fontface="bold") +
+          color="black", size=2, vjust=-2, fontface="bold") +
+        ## Labels
+        ggplot2::geom_text(
+          data=dplyr::filter(bat_pheno_sites, bat_pheno_sites$display_name==tail(levels(bat_pheno_sites$display_name), n=1)),
+          ggplot2::aes(x=max_yd, y=display_name, label="Dernière\nobservation"),
+          color=last, size=2, vjust=-0.5, fontface="bold") +
+        ggplot2::geom_text(
+          data=dplyr::filter(bat_pheno_sites, bat_pheno_sites$display_name==tail(levels(bat_pheno_sites$display_name), n=1)),
+          ggplot2::aes(x=min_yd, y=display_name, label="Première\nobservation"),
+          color=first, size=2, vjust=-0.5, fontface="bold") +
         ## Add labels to values
         # ggplot2::geom_text(
         #   ggplot2::aes(x=min_wk, y=display_name, label=min_d),
@@ -135,6 +151,8 @@ mod_pheno_sites_server <- function(id, rcoleo_sites_sf, bat_pheno_sites){
         #ggplot2::scale_y_discrete(expand=c(0.2,0)) +
         ggplot2::theme_bw() +
         ggplot2::theme(
+          #plot.margin = ggplot2::margin(3,0,1,0, "cm"),
+          text = ggplot2::element_text(size = 8),
           axis.text.x = ggplot2::element_text(margin=ggplot2::margin(10,0,0,0), angle = 30, vjust = 1, hjust = 1),
           panel.grid.major.y = ggplot2::element_blank(),
           panel.grid.minor.y = ggplot2::element_blank(),
@@ -144,7 +162,13 @@ mod_pheno_sites_server <- function(id, rcoleo_sites_sf, bat_pheno_sites){
           axis.ticks=ggplot2::element_blank(),
           axis.title.x=ggplot2::element_blank(),
           axis.title.y=ggplot2::element_blank()
-        )    })
+        ) 
+        # Create giraph
+        ggiraph::girafe(ggobj = ggplot,
+                        #width_svg = 16, 
+                        height_svg = 3.4,
+                        options = list(ggiraph::opts_sizing(rescale = TRUE, width = 1)))
+      }) 
   })
 }
 
