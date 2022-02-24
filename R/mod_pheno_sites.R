@@ -11,27 +11,32 @@
 #' @importFrom shiny NS tagList 
 mod_pheno_sites_ui <- function(id){
   ns <- NS(id)
-  tagList(
-    selectInput(ns("taxa"),"Taxon",c("Eptesicus fuscus" = "Eptesicus fuscus",
-                                                "Eptesicus fuscus|Lasionycteris noctivagans" = "Eptesicus fuscus|Lasionycteris noctivagans",
-                                                "Eptesicus fuscus|Lasiurus borealis" = "Eptesicus fuscus|Lasiurus borealis",
-                                                "Lasionycteris noctivagans" = "Lasionycteris noctivagans",
-                                                "Lasiurus borealis" = "Lasiurus borealis",
-                                                "Lasiurus cinereus" = "Lasiurus cinereus",
-                                                "Lasiurus cinereus|Lasionycteris noctivagans" = "Lasiurus cinereus|Lasionycteris noctivagans",
-                                                "Myotis lucifugus" = "Myotis lucifugus",
-                                                "Myotis lucifugus|Lasiurus borealis" = "Myotis lucifugus|Lasiurus borealis",
-                                                "Myotis lucifugus|Myotis septentrionalis|Myotis leibii" = "Myotis lucifugus|Myotis septentrionalis|Myotis leibii",
-                                                "Myotis septentrionalis" = "Myotis septentrionalis",
-                                                "Perimyotis subflavus" = "Perimyotis subflavus",
-                                                "Perimyotis subflavus|Myotis lucifugus" = "Perimyotis subflavus|Myotis lucifugus",
-                                                "Chiroptera" = "Chiroptera")),
-    selectInput(ns("annee"),"Année",c("2018"="2018","2017"="2017","2016"="2016")),
-    selectInput(ns("ordre"),"Ordre de comparaison",c("Jours de présence"='jours_de_presence',"Latitude"='lat', "Première observation"="premiere_obs", "Type de site"="type_site")),
-    shinycssloaders::withSpinner(
-      ggiraph::girafeOutput(ns("pheno_sites"),width='95%',height='50%'),
-      proxy.height = '200px',color='#538887',type=7
+  shiny::fluidPage(
+    shiny::sidebarLayout(
+      shiny::sidebarPanel(
+        selectInput(ns("taxa"),"Taxon",c("Eptesicus fuscus" = "Eptesicus fuscus",
+                                         "Eptesicus fuscus|Lasionycteris noctivagans" = "Eptesicus fuscus|Lasionycteris noctivagans",
+                                         "Eptesicus fuscus|Lasiurus borealis" = "Eptesicus fuscus|Lasiurus borealis",
+                                         "Lasionycteris noctivagans" = "Lasionycteris noctivagans",
+                                         "Lasiurus borealis" = "Lasiurus borealis",
+                                         "Lasiurus cinereus" = "Lasiurus cinereus",
+                                         "Lasiurus cinereus|Lasionycteris noctivagans" = "Lasiurus cinereus|Lasionycteris noctivagans",
+                                         "Myotis lucifugus" = "Myotis lucifugus",
+                                         "Myotis lucifugus|Lasiurus borealis" = "Myotis lucifugus|Lasiurus borealis",
+                                         "Myotis lucifugus|Myotis septentrionalis|Myotis leibii" = "Myotis lucifugus|Myotis septentrionalis|Myotis leibii",
+                                         "Myotis septentrionalis" = "Myotis septentrionalis",
+                                         "Perimyotis subflavus" = "Perimyotis subflavus",
+                                         "Perimyotis subflavus|Myotis lucifugus" = "Perimyotis subflavus|Myotis lucifugus",
+                                         "Chiroptera" = "Chiroptera")),
+        selectInput(ns("annee"),"Année",c("2018"="2018","2017"="2017","2016"="2016")),
+        selectInput(ns("ordre"),"Ordre de comparaison",c("Jours de présence"='jours_de_presence',"Latitude"='lat', "Première observation"="premiere_obs", "Type de site"="type_site"))
+      ),
+      shiny::mainPanel(
+        shinycssloaders::withSpinner(
+          ggiraph::girafeOutput(ns("pheno_sites"),width='95%',height='50%'),
+          proxy.height = '200px',color='#538887',type=7)
       )
+    )
   )
 }
 
