@@ -9,12 +9,22 @@
 #' @importFrom shiny NS tagList 
 mod_pheno_species_ui <- function(id){
   ns <- NS(id)
-  tagList(
-    selectInput(
-      ns("ordre"),
-      "Ordre de comparaison",
-      c("Jours de présence"='jours_de_presence', "Première observation"="premiere_obs")),
-    ggiraph::girafeOutput(ns("pheno_species"))
+  shiny::fluidPage(
+    shiny::fluidRow(
+      shiny::selectInput(
+        ns("ordre"),
+        "Ordre de comparaison",
+        c("Jours de présence"='jours_de_presence', "Première observation"="premiere_obs"))
+    ),
+    shiny::fluidRow(
+      shiny::column(3,
+                    shiny::htmlOutput(ns("tbl_data"))
+                    #tableOutput(ns("env_tbl"))
+      ),
+      shiny::column(9,
+                    ggiraph::girafeOutput(ns("pheno_species"))
+      )
+    )
   )
 }
 
@@ -25,7 +35,51 @@ mod_pheno_species_ui <- function(id){
 mod_pheno_species_server <- function(id, site_name, site, rcoleo_sites_sf, bats_pheno){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    output$pheno_species<-ggiraph::renderGirafe({
+    
+    # Fun facts -----------------------------------------------------------
+    output$tbl_data <- renderUI({
+      
+      # Compute metrics
+      ## Get site_code
+      site_code_sel <- bats_pheno$site_code[bats_pheno$display_name == site()]
+      ## Get all the coleo sites
+      obs_site <- rcoleo::download_sites_sf(token = rcoleo:::bearer()) |>
+        mapselector::subset_site_df(campaign_type = "acoustique") |>
+        mapselector::get_subset_site(site_code_sel = site_code_sel)
+      
+      ## jour max observations
+      day_max <- obs_site$date_obs |>
+        lubridate::ymd() |>
+        lubridate::yday() |>
+        table() |>
+        which.max() |>
+        names() |>
+        as.numeric() |>
+        as.Date(origin = "2016-01-01") 
+      month <- lubridate::month(day_max, label=TRUE, abbr = TRUE)
+      month_df <- data.frame(month = c("Jan", "Feb", "Mar" , "Apr" , "May" , "Jun" , "Jul" , "Aug" , "Sep" , "Oct" , "Nov" , "Dec"),
+                             mois = c("Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Aout", "Septembre","Octobre", "Novembre", "Décembre"))
+      mois <- month_df[month_df$month==month, "mois"]
+      jour <- lubridate::mday(day_max)
+      jour_max <- paste(jour, mois)
+      
+      ## Heure max observations
+      hour_max <- 
+        sapply(strsplit(obs_site$time_obs,split=":"), function(x) x[1]) |>
+        table() |>
+        which.max() |>
+        names()
+      hour_max <- paste0(hour_max, ":00")
+      
+      # Cards
+      div(
+        fact_card(jour_max,'Journée la plus active','calendar-day','main-1'),
+        fact_card(hour_max,'Heure d\'activité maximale','clock','main-2')
+      )
+    })
+    
+    # Figure --------------------------------------------------------------
+    output$pheno_species <- ggiraph::renderGirafe({
       
       ordre = input$ordre
 
