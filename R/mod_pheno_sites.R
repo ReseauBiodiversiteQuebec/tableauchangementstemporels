@@ -12,30 +12,34 @@
 mod_pheno_sites_ui <- function(id){
   ns <- NS(id)
   shiny::fluidPage(
-    shiny::sidebarLayout(
-      shiny::sidebarPanel(
-        selectInput(ns("taxa"),"Taxon",c("Eptesicus fuscus" = "Eptesicus fuscus",
-                                         "Eptesicus fuscus|Lasionycteris noctivagans" = "Eptesicus fuscus|Lasionycteris noctivagans",
-                                         "Eptesicus fuscus|Lasiurus borealis" = "Eptesicus fuscus|Lasiurus borealis",
-                                         "Lasionycteris noctivagans" = "Lasionycteris noctivagans",
-                                         "Lasiurus borealis" = "Lasiurus borealis",
-                                         "Lasiurus cinereus" = "Lasiurus cinereus",
-                                         "Lasiurus cinereus|Lasionycteris noctivagans" = "Lasiurus cinereus|Lasionycteris noctivagans",
-                                         "Myotis lucifugus" = "Myotis lucifugus",
-                                         "Myotis lucifugus|Lasiurus borealis" = "Myotis lucifugus|Lasiurus borealis",
-                                         "Myotis lucifugus|Myotis septentrionalis|Myotis leibii" = "Myotis lucifugus|Myotis septentrionalis|Myotis leibii",
-                                         "Myotis septentrionalis" = "Myotis septentrionalis",
-                                         "Perimyotis subflavus" = "Perimyotis subflavus",
-                                         "Perimyotis subflavus|Myotis lucifugus" = "Perimyotis subflavus|Myotis lucifugus",
-                                         "Chiroptera" = "Chiroptera")),
-        selectInput(ns("annee"),"Année",c("2018"="2018","2017"="2017","2016"="2016")),
-        selectInput(ns("ordre"),"Ordre de comparaison",c("Jours de présence"='jours_de_presence',"Latitude"='lat', "Première observation"="premiere_obs", "Type de site"="type_site"))
+    shiny::fluidRow(
+      shiny::column(4,
+                    selectInput(ns("taxa"),"Taxon",c("Eptesicus fuscus" = "Eptesicus fuscus",
+                                                     "Eptesicus fuscus|Lasionycteris noctivagans" = "Eptesicus fuscus|Lasionycteris noctivagans",
+                                                     "Eptesicus fuscus|Lasiurus borealis" = "Eptesicus fuscus|Lasiurus borealis",
+                                                     "Lasionycteris noctivagans" = "Lasionycteris noctivagans",
+                                                     "Lasiurus borealis" = "Lasiurus borealis",
+                                                     "Lasiurus cinereus" = "Lasiurus cinereus",
+                                                     "Lasiurus cinereus|Lasionycteris noctivagans" = "Lasiurus cinereus|Lasionycteris noctivagans",
+                                                     "Myotis lucifugus" = "Myotis lucifugus",
+                                                     "Myotis lucifugus|Lasiurus borealis" = "Myotis lucifugus|Lasiurus borealis",
+                                                     "Myotis lucifugus|Myotis septentrionalis|Myotis leibii" = "Myotis lucifugus|Myotis septentrionalis|Myotis leibii",
+                                                     "Myotis septentrionalis" = "Myotis septentrionalis",
+                                                     "Perimyotis subflavus" = "Perimyotis subflavus",
+                                                     "Perimyotis subflavus|Myotis lucifugus" = "Perimyotis subflavus|Myotis lucifugus",
+                                                     "Chiroptera" = "Chiroptera"))
       ),
-      shiny::mainPanel(
-        shinycssloaders::withSpinner(
-          ggiraph::girafeOutput(ns("pheno_sites"),width='95%',height='50%'),
-          proxy.height = '200px',color='#538887',type=7)
+      shiny::column(4,
+                    selectInput(ns("annee"),"Année",c("2018"="2018","2017"="2017","2016"="2016"))
+      ),
+      shiny::column(4,
+                    selectInput(ns("ordre"),"Ordre de comparaison",c("Jours de présence"='jours_de_presence',"Latitude"='lat', "Première observation"="premiere_obs", "Type de site"="type_site"))
       )
+    ),
+    shiny::fluidRow(
+      shinycssloaders::withSpinner(
+        ggiraph::girafeOutput(ns("pheno_sites"),width='95%',height='50%'),
+        proxy.height = '200px',color='#538887',type=7)
     )
   )
 }
@@ -54,21 +58,10 @@ mod_pheno_sites_server <- function(id, rcoleo_sites_sf, bats_pheno){
       rcoleo_sites_bats <- rcoleo_sites_sf |>
         dplyr::mutate(lat = sf::st_coordinates(geom.coordinates)[,"Y"]) |>
         as.data.frame() |>
-        dplyr::select(site_code, display_name, cell.name, type, lat)
+        dplyr::select(site_code, cell.name, type, lat)
       
       bat_pheno_sites <- 
         bats_pheno |>
-        # ## Get dates
-        # dplyr::mutate(min_date = lubridate::ymd(min_date),
-        #               max_date = lubridate::ymd(max_date),
-        #               min_yd = lubridate::yday(min_date),
-        #               max_yd = lubridate::yday(max_date),
-        #               min_d = lubridate::day(min_date),
-        #               max_d = lubridate::day(max_date),
-        #               Taxon = factor(taxa_name),
-        #               ## Compute presence time
-        #               pres = (lubridate::interval(min_date, max_date) / lubridate::days(1))+1) |>
-        # dplyr::select(Taxon, min_yd, max_yd, pres, min_d, max_d, min_date, site_code) |>
         ## Select one species
         dplyr::filter(Taxon == input$taxa) |>
         ## Select year
@@ -115,6 +108,15 @@ mod_pheno_sites_server <- function(id, rcoleo_sites_sf, bats_pheno){
       ## Inspired by https://towardsdatascience.com/create-dumbbell-plots-to-visualize-group-differences-in-r-3536b7d0a19a
       bat_pheno_sites |>
         ggplot2::ggplot() +
+        ### Add presence column
+        ggplot2::geom_rect(
+          ggplot2::aes(xmin=366, xmax=441, ymin=-Inf, ymax=Inf), fill="grey") +
+        ggplot2::geom_text(
+          ggplot2::aes(label=pres, y=display_name, x=403.5), fontface="bold", size=2) +
+        ggplot2::geom_text(
+          data=dplyr::filter(bat_pheno_sites, bat_pheno_sites$display_name==tail(levels(bat_pheno_sites$display_name), n=1)), 
+          ggplot2::aes(x=403.5, y=display_name, label="Jours de présence"),
+          color="black", size=2, vjust=-2, fontface="bold") +
         ## Add horizontal grey lines
         ggplot2::geom_segment(
           ggplot2::aes(y=display_name, yend=display_name, x=min_yd, xend=max_yd), color="grey", size=1) +
@@ -123,15 +125,6 @@ mod_pheno_sites_server <- function(id, rcoleo_sites_sf, bats_pheno){
         ## Add last observation points
         ggplot2::geom_point(ggplot2::aes(y=display_name, x=max_yd), size=2, colour = last) +
         ggplot2::scale_y_discrete(expand = c(0,1.2)) +
-        ### Add presence column
-        ggplot2::geom_rect(
-          ggplot2::aes(xmin=275, xmax=350, ymin=-Inf, ymax=Inf), fill="grey") +
-        ggplot2::geom_text(
-          ggplot2::aes(label=pres, y=display_name, x=312.5), fontface="bold", size=2) +
-        ggplot2::geom_text(
-          data=dplyr::filter(bat_pheno_sites, bat_pheno_sites$display_name==tail(levels(bat_pheno_sites$display_name), n=1)), 
-          ggplot2::aes(x=312.5, y=display_name, label="Jours de présence"),
-          color="black", size=2, vjust=-2, fontface="bold") +
         ## Labels
         ggplot2::geom_text(
           data=dplyr::filter(bat_pheno_sites, bat_pheno_sites$display_name==tail(levels(bat_pheno_sites$display_name), n=1)),
@@ -149,7 +142,7 @@ mod_pheno_sites_server <- function(id, rcoleo_sites_sf, bats_pheno){
         #   ggplot2::aes(x=max_wk, y=display_name, label=max_d),
         #   color=last, size=2.75, vjust=2.5) +
         ggplot2::scale_x_continuous(breaks = mth_breaks$day,
-                                    limits = c(1,366),
+                                    limits = c(1,441),
                                     labels = mth_breaks$mois,
                                     minor_breaks = c(1:366)[!c(1:366) %in% mth_breaks$day],
                                     expand = c(0, 0)) +

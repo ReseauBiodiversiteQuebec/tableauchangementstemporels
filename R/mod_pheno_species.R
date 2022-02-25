@@ -30,9 +30,8 @@ mod_pheno_species_server <- function(id, site_name, site, rcoleo_sites_sf, bats_
       ordre = input$ordre
 
       bats_pheno_site <- bats_pheno |>
-        # dplyr::select(Taxon, min_yd, max_yd, pres, min_d, max_d, min_date, site_code) |>
         ## Select one site
-        dplyr::filter(site_code == site())
+        dplyr::filter(display_name == site())
       
       # Order species
       if(ordre == "premiere_obs") {
@@ -68,6 +67,15 @@ mod_pheno_species_server <- function(id, site_name, site, rcoleo_sites_sf, bats_
       ## Inspired by https://towardsdatascience.com/create-dumbbell-plots-to-visualize-group-differences-in-r-3536b7d0a19a
       bats_pheno_site |>
         ggplot2::ggplot() +
+        ## Add presence column
+        ggplot2::geom_rect(
+          ggplot2::aes(xmin=366, xmax=441, ymin=-Inf, ymax=Inf), fill="grey") +
+        ggplot2::geom_text(
+          ggplot2::aes(label=pres, y=Taxon, x=403.5), fontface="bold", size=3) +
+        ggplot2::geom_text(
+          data=dplyr::filter(bats_pheno_site, bats_pheno_site$Taxon==tail(levels(bats_pheno_site$Taxon), n=1)),
+          ggplot2::aes(x=403.5, y=Taxon, label="Jours de présence"),
+          color="black", size=3.1, vjust=-2, fontface="bold") +
         ## Add horizontal grey lines
         ggplot2::geom_segment(
           ggplot2::aes(y=Taxon, yend=Taxon, x=0, xend=366),
@@ -89,15 +97,6 @@ mod_pheno_species_server <- function(id, site_name, site, rcoleo_sites_sf, bats_
           data=dplyr::filter(bats_pheno_site, bats_pheno_site$Taxon==tail(levels(bats_pheno_site$Taxon), n=1)),
           ggplot2::aes(x=min_yd, y=Taxon, label="Première\nobservation"),
           color=first, size=3, vjust=-0.5, fontface="bold") +
-        ## Add presence column
-        ggplot2::geom_rect(
-          ggplot2::aes(xmin=275, xmax=350, ymin=-Inf, ymax=Inf), fill="grey") +
-        ggplot2::geom_text(
-          ggplot2::aes(label=pres, y=Taxon, x=312.5), fontface="bold", size=3) +
-        ggplot2::geom_text(
-          data=dplyr::filter(bats_pheno_site, bats_pheno_site$Taxon==tail(levels(bats_pheno_site$Taxon), n=1)),
-          ggplot2::aes(x=312.5, y=Taxon, label="Jours de présence"),
-          color="black", size=3.1, vjust=-2, fontface="bold") +
         ## Add labels to values
         # ggplot2::geom_text(
         #   ggplot2::aes(x=min_wk, y=Taxon, label=min_d),
@@ -107,7 +106,7 @@ mod_pheno_species_server <- function(id, site_name, site, rcoleo_sites_sf, bats_
         #   color=last, size=2.75, vjust=2.5) +
         # Add presence column
         ggplot2::scale_x_continuous(breaks = mth_breaks$day,
-                                    limits = c(1,366),
+                                    limits = c(1,441),
                                     labels = mth_breaks$mois,
                                     minor_breaks = c(1:366)[!c(1:366) %in% mth_breaks$day],
                                     expand = c(0, 0)) +
