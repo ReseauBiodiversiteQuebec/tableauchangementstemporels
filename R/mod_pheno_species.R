@@ -9,12 +9,22 @@
 #' @importFrom shiny NS tagList 
 mod_pheno_species_ui <- function(id){
   ns <- NS(id)
-  tagList(
-    selectInput(
-      ns("ordre"),
-      "Ordre de comparaison",
-      c("Jours de présence"='jours_de_presence', "Première observation"="premiere_obs")),
-    ggiraph::girafeOutput(ns("pheno_species"))
+  shiny::fluidPage(
+    shiny::fluidRow(
+      shiny::selectInput(
+        ns("ordre"),
+        "Ordre de comparaison",
+        c("Jours de présence"='jours_de_presence', "Première observation"="premiere_obs"))
+    ),
+    shiny::fluidRow(
+      shiny::column(3,
+                    shiny::htmlOutput(ns("tbl_data"))
+                    #tableOutput(ns("env_tbl"))
+      ),
+      shiny::column(9,
+                    ggiraph::girafeOutput(ns("pheno_species"))
+      )
+    )
   )
 }
 
@@ -25,14 +35,57 @@ mod_pheno_species_ui <- function(id){
 mod_pheno_species_server <- function(id, site_name, site, rcoleo_sites_sf, bats_pheno){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    output$pheno_species<-ggiraph::renderGirafe({
+    
+    # Fun facts -----------------------------------------------------------
+    output$tbl_data <- renderUI({
+      
+      # Compute metrics
+      ## Get site_code
+      site_code_sel <- bats_pheno$site_code[bats_pheno$display_name == site()]
+      ## Get all the coleo sites
+      obs_site <- rcoleo::download_sites_sf(token = rcoleo:::bearer()) |>
+        mapselector::subset_site_df(campaign_type = "acoustique") |>
+        mapselector::get_subset_site(site_code_sel = site_code_sel)
+      
+      ## jour max observations
+      day_max <- obs_site$date_obs |>
+        lubridate::ymd() |>
+        lubridate::yday() |>
+        table() |>
+        which.max() |>
+        names() |>
+        as.numeric() |>
+        as.Date(origin = "2016-01-01") 
+      month <- lubridate::month(day_max, label=TRUE, abbr = TRUE)
+      month_df <- data.frame(month = c("Jan", "Feb", "Mar" , "Apr" , "May" , "Jun" , "Jul" , "Aug" , "Sep" , "Oct" , "Nov" , "Dec"),
+                             mois = c("Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Aout", "Septembre","Octobre", "Novembre", "Décembre"))
+      mois <- month_df[month_df$month==month, "mois"]
+      jour <- lubridate::mday(day_max)
+      jour_max <- paste(jour, mois)
+      
+      ## Heure max observations
+      hour_max <- 
+        sapply(strsplit(obs_site$time_obs,split=":"), function(x) x[1]) |>
+        table() |>
+        which.max() |>
+        names()
+      hour_max <- paste0(hour_max, ":00")
+      
+      # Cards
+      div(
+        fact_card(jour_max,'Journée la plus active','calendar-day','main-1'),
+        fact_card(hour_max,'Heure d\'activité maximale','clock','main-2')
+      )
+    })
+    
+    # Figure --------------------------------------------------------------
+    output$pheno_species <- ggiraph::renderGirafe({
       
       ordre = input$ordre
 
       bats_pheno_site <- bats_pheno |>
-        # dplyr::select(Taxon, min_yd, max_yd, pres, min_d, max_d, min_date, site_code) |>
         ## Select one site
-        dplyr::filter(site_code == site())
+        dplyr::filter(display_name == site())
       
       # Order species
       if(ordre == "premiere_obs") {
@@ -68,6 +121,15 @@ mod_pheno_species_server <- function(id, site_name, site, rcoleo_sites_sf, bats_
       ## Inspired by https://towardsdatascience.com/create-dumbbell-plots-to-visualize-group-differences-in-r-3536b7d0a19a
       bats_pheno_site |>
         ggplot2::ggplot() +
+        ## Add presence column
+        ggplot2::geom_rect(
+          ggplot2::aes(xmin=366, xmax=441, ymin=-Inf, ymax=Inf), fill="grey") +
+        ggplot2::geom_text(
+          ggplot2::aes(label=pres, y=Taxon, x=403.5), fontface="bold", size=3) +
+        ggplot2::geom_text(
+          data=dplyr::filter(bats_pheno_site, bats_pheno_site$Taxon==tail(levels(bats_pheno_site$Taxon), n=1)),
+          ggplot2::aes(x=403.5, y=Taxon, label="Jours de présence"),
+          color="black", size=3.1, vjust=-2, fontface="bold") +
         ## Add horizontal grey lines
         ggplot2::geom_segment(
           ggplot2::aes(y=Taxon, yend=Taxon, x=0, xend=366),
@@ -89,15 +151,6 @@ mod_pheno_species_server <- function(id, site_name, site, rcoleo_sites_sf, bats_
           data=dplyr::filter(bats_pheno_site, bats_pheno_site$Taxon==tail(levels(bats_pheno_site$Taxon), n=1)),
           ggplot2::aes(x=min_yd, y=Taxon, label="Première\nobservation"),
           color=first, size=3, vjust=-0.5, fontface="bold") +
-        ## Add presence column
-        ggplot2::geom_rect(
-          ggplot2::aes(xmin=275, xmax=350, ymin=-Inf, ymax=Inf), fill="grey") +
-        ggplot2::geom_text(
-          ggplot2::aes(label=pres, y=Taxon, x=312.5), fontface="bold", size=3) +
-        ggplot2::geom_text(
-          data=dplyr::filter(bats_pheno_site, bats_pheno_site$Taxon==tail(levels(bats_pheno_site$Taxon), n=1)),
-          ggplot2::aes(x=312.5, y=Taxon, label="Jours de présence"),
-          color="black", size=3.1, vjust=-2, fontface="bold") +
         ## Add labels to values
         # ggplot2::geom_text(
         #   ggplot2::aes(x=min_wk, y=Taxon, label=min_d),
@@ -107,7 +160,7 @@ mod_pheno_species_server <- function(id, site_name, site, rcoleo_sites_sf, bats_
         #   color=last, size=2.75, vjust=2.5) +
         # Add presence column
         ggplot2::scale_x_continuous(breaks = mth_breaks$day,
-                                    limits = c(1,366),
+                                    limits = c(1,441),
                                     labels = mth_breaks$mois,
                                     minor_breaks = c(1:366)[!c(1:366) %in% mth_breaks$day],
                                     expand = c(0, 0)) +
