@@ -19,7 +19,7 @@ mod_pheno_species_ui <- function(id){
     shiny::fluidRow(
       shiny::column(3,
                     shiny::htmlOutput(ns("tbl_data"))
-                    #tableOutput(ns("env_tbl"))
+                    #shiny::htmlOutput(ns("photo"))
       ),
       shiny::column(9,
                     ggiraph::girafeOutput(ns("pheno_species"))
