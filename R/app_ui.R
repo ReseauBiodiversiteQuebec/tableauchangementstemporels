@@ -13,7 +13,7 @@ app_ui <- function(request) {
       mapselector::tableau_de_bord(
         mapselector::dash_sidebar(
           mapselector::dash_title(title = "Phénologie des chauves souris",icon="nature-cute-028-tree"), 
-          mapselector::badge(text_badge = "Cet interface permet d'explorer la phénologie des chauves souris et ses changements temporels à l'aide des points d'écoutes effectués dans le cadre du réseau de suivi de la biodiversité du Québec."),
+          mapselector::badge(text_badge = "Cette interface permet d'explorer la phénologie des chauves-souris et ses changements temporels à l'aide des points d'écoute effectués dans le cadre du réseau de suivi de la biodiversité du Québec."),
           mod_fun_facts_ui('fun_facts')
         ), 
         mapselector::dash_tabs(
