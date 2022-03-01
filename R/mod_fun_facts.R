@@ -21,7 +21,7 @@ mod_fun_facts_server <- function(id, acoustique_obs){
     output$facts<-renderUI({div(
       fact_card(paste(lubridate::year(min(acoustique_obs$min_date)),"à",lubridate::year(max(acoustique_obs$max_date))),'Période couverte','calendar-alt','main-1'),
       fact_card(nrow(acoustique_obs),'Observations auditives','microphone-alt','main-2'),
-      fact_card(length(unique(acoustique_obs$taxa_name)),'Taxons identifiés','fianimals animals-007-bat','main-3')
+      fact_card(length(unique(acoustique_obs$taxa_name)),'Taxons identifiés','search','main-3')
       )
     })
   })

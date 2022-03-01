@@ -128,13 +128,13 @@ mod_pheno_species_server <- function(id, site_name, site, rcoleo_sites_sf, bats_
           ggplot2::aes(label=pres, y=Taxon, x=403.5), fontface="bold", size=3) +
         ggplot2::geom_text(
           data=dplyr::filter(bats_pheno_site, bats_pheno_site$Taxon==tail(levels(bats_pheno_site$Taxon), n=1)),
-          ggplot2::aes(x=403.5, y=Taxon, label="Jours de présence"),
-          color="black", size=3.1, vjust=-2, fontface="bold") +
+          ggplot2::aes(x=403.5, y=Taxon, label="Jours de\nprésence"),
+          color="black", size=3.1, vjust=-0.5, fontface="bold") +
         ## Add horizontal grey lines
         ggplot2::geom_segment(
           ggplot2::aes(y=Taxon, yend=Taxon, x=0, xend=366),
           color="#b2b2b2", size=0.15) +
-        ggplot2::scale_y_discrete(expand = c(0,1.2)) +
+        ggplot2::scale_y_discrete(expand = ggplot2::expansion(mult = c(0.06, 0.15))) +
         ## Add horizontal grey lines
         ggplot2::geom_segment(
           ggplot2::aes(y=Taxon, yend=Taxon, x=min_yd, xend=max_yd), color="grey", size=1.5) +
@@ -165,7 +165,7 @@ mod_pheno_species_server <- function(id, site_name, site, rcoleo_sites_sf, bats_
                                     minor_breaks = c(1:366)[!c(1:366) %in% mth_breaks$day],
                                     expand = c(0, 0)) +
         #ggplot2::scale_y_discrete(expand=c(0.2,0)) +
-        ggplot2::theme_bw(base_family="Lato") +
+        ggplot2::theme_bw(base_family="Lato", base_size = 16) +
         ggplot2::theme(
           #text = ggplot2::element_text(size = 16),
           axis.text.x = ggplot2::element_text(margin=ggplot2::margin(10,0,0,0), angle = 30, vjust = 1, hjust = 1),

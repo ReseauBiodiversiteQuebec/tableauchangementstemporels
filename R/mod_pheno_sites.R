@@ -115,8 +115,8 @@ mod_pheno_sites_server <- function(id, rcoleo_sites_sf, bats_pheno){
           ggplot2::aes(label=pres, y=display_name, x=403.5), fontface="bold", size=2) +
         ggplot2::geom_text(
           data=dplyr::filter(bat_pheno_sites, bat_pheno_sites$display_name==tail(levels(bat_pheno_sites$display_name), n=1)), 
-          ggplot2::aes(x=403.5, y=display_name, label="Jours de présence"),
-          color="black", size=2, vjust=-2, fontface="bold") +
+          ggplot2::aes(x=403.5, y=display_name, label="Jours de\nprésence"),
+          color="black", size=2, vjust=-0.5, fontface="bold") +
         ## Add horizontal grey lines
         ggplot2::geom_segment(
           ggplot2::aes(y=display_name, yend=display_name, x=min_yd, xend=max_yd), color="grey", size=1) +
@@ -124,7 +124,7 @@ mod_pheno_sites_server <- function(id, rcoleo_sites_sf, bats_pheno){
         ggplot2::geom_point(ggplot2::aes(y=display_name, x=min_yd), size=2, colour = first) +
         ## Add last observation points
         ggplot2::geom_point(ggplot2::aes(y=display_name, x=max_yd), size=2, colour = last) +
-        ggplot2::scale_y_discrete(expand = c(0,1.2)) +
+        ggplot2::scale_y_discrete(expand = ggplot2::expansion(mult = c(0.06, 0.15))) +
         ## Labels
         ggplot2::geom_text(
           data=dplyr::filter(bat_pheno_sites, bat_pheno_sites$display_name==tail(levels(bat_pheno_sites$display_name), n=1)),
@@ -147,10 +147,9 @@ mod_pheno_sites_server <- function(id, rcoleo_sites_sf, bats_pheno){
                                     minor_breaks = c(1:366)[!c(1:366) %in% mth_breaks$day],
                                     expand = c(0, 0)) +
         #ggplot2::scale_y_discrete(expand=c(0.2,0)) +
-        ggplot2::theme_bw() +
+        ggplot2::theme_bw(base_family="Lato", base_size = 8) +
         ggplot2::theme(
           #plot.margin = ggplot2::margin(3,0,1,0, "cm"),
-          text = ggplot2::element_text(size = 8),
           axis.text.x = ggplot2::element_text(margin=ggplot2::margin(10,0,0,0), angle = 30, vjust = 1, hjust = 1),
           panel.grid.major.y = ggplot2::element_blank(),
           panel.grid.minor.y = ggplot2::element_blank(),
