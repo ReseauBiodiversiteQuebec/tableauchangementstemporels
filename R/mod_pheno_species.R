@@ -165,7 +165,7 @@ mod_pheno_species_server <- function(id, site_name, site, rcoleo_sites_sf, bats_
                                     minor_breaks = c(1:366)[!c(1:366) %in% mth_breaks$day],
                                     expand = c(0, 0)) +
         #ggplot2::scale_y_discrete(expand=c(0.2,0)) +
-        ggplot2::theme_bw() +
+        ggplot2::theme_bw(base_family="Lato") +
         ggplot2::theme(
           #text = ggplot2::element_text(size = 16),
           axis.text.x = ggplot2::element_text(margin=ggplot2::margin(10,0,0,0), angle = 30, vjust = 1, hjust = 1),
