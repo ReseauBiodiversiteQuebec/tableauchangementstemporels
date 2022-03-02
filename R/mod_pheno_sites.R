@@ -48,14 +48,14 @@ mod_pheno_sites_ui <- function(id){
 #'
 #' @param species_data sites x species count summary table
 #'
-mod_pheno_sites_server <- function(id, rcoleo_sites_sf, bats_pheno){
+mod_pheno_sites_server <- function(id, acoustique_sites_sf, bats_pheno){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
     output$pheno_sites<-ggiraph::renderGirafe({ #plotly::renderPlotly({
       
       # Add latitude data to bats_pheno_site
-      rcoleo_sites_bats <- rcoleo_sites_sf |>
+      rcoleo_sites_bats <- acoustique_sites_sf |>
         dplyr::mutate(lat = sf::st_coordinates(geom.coordinates)[,"Y"]) |>
         as.data.frame() |>
         dplyr::select(site_code, cell.name, type, lat)
@@ -68,6 +68,18 @@ mod_pheno_sites_server <- function(id, rcoleo_sites_sf, bats_pheno){
         dplyr::filter(lubridate::year(min_date) == input$annee) |>
         # Get site's latitude
         dplyr::left_join(rcoleo_sites_bats, by = "site_code")
+      
+      # Add labels to points if ordre == "premiere_obs"
+      m_en <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+      m_fr <- c("Jan", "Fév", "Mars", "Avril", "Mai", "Juin", "Juil", "Août", "Sept","Oct", "Nov", "Déc")
+      if(input$ordre == "premiere_obs") {
+        bat_pheno_sites <-
+          bat_pheno_sites|>
+          dplyr::mutate(date_lbl = lubridate::month(min_date, abbr = TRUE, label = TRUE),
+                        date_lbl = sapply(lubridate::month(bat_pheno_sites$min_date, abbr = TRUE, label = TRUE), function(x) m_fr[m_en == x]),
+                        date_lbl = paste(min_d, date_lbl))
+      }else {bat_pheno_sites$date_lbl <- NA}
+      
       
       
       # Order species
@@ -97,7 +109,7 @@ mod_pheno_sites_server <- function(id, rcoleo_sites_sf, bats_pheno){
         dplyr::distinct() |>
         dplyr::group_by(mth) |>
         dplyr::summarise(wk = min(wk), day = min(day)) |>
-        dplyr::mutate(mois = c("Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Aout", "Septembre","Octobre", "Novembre", "Décembre"))
+        dplyr::mutate(mois = c("Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre","Octobre", "Novembre", "Décembre"))
       
       # colors
       first <- rgb(0.18,0.545,0.341,0.8)
@@ -135,9 +147,9 @@ mod_pheno_sites_server <- function(id, rcoleo_sites_sf, bats_pheno){
           ggplot2::aes(x=min_yd, y=display_name, label="Première\nobservation"),
           color=first, size=2, vjust=-0.5, fontface="bold") +
         ## Add labels to values
-        # ggplot2::geom_text(
-        #   ggplot2::aes(x=min_wk, y=display_name, label=min_d),
-        #   color=first, size=2.75, vjust=2.5) +
+        ggplot2::geom_text(
+          ggplot2::aes(x=min_yd, y=display_name, label=date_lbl),
+          color=first, size=1.75, vjust=2.5) +
         # ggplot2::geom_text(
         #   ggplot2::aes(x=max_wk, y=display_name, label=max_d),
         #   color=last, size=2.75, vjust=2.5) +

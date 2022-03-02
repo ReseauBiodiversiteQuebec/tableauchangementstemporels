@@ -87,6 +87,17 @@ mod_pheno_species_server <- function(id, site_name, site, rcoleo_sites_sf, bats_
         ## Select one site
         dplyr::filter(display_name == site())
       
+      # Add labels to points if ordre == "premiere_obs"
+      m_en <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+      m_fr <- c("Jan", "Fév", "Mars", "Avril", "Mai", "Juin", "Juil", "Août", "Sept","Oct", "Nov", "Déc")
+      if(ordre == "premiere_obs") {
+        bats_pheno_site <-
+          bats_pheno_site|>
+          dplyr::mutate(date_lbl = lubridate::month(min_date, abbr = TRUE, label = TRUE),
+                        date_lbl = sapply(lubridate::month(bats_pheno_site$min_date, abbr = TRUE, label = TRUE), function(x) m_fr[m_en == x]),
+                        date_lbl = paste(min_d, date_lbl))
+      }else {bats_pheno_site$date_lbl <- NA}
+      
       # Order species
       if(ordre == "premiere_obs") {
         bats_pheno_site$Taxon <- reorder(bats_pheno_site$Taxon, -bats_pheno_site$min_yd)
@@ -110,7 +121,7 @@ mod_pheno_species_server <- function(id, site_name, site, rcoleo_sites_sf, bats_
         dplyr::distinct() |>
         dplyr::group_by(mth) |>
         dplyr::summarise(wk = min(wk), day = min(day)) |>
-        dplyr::mutate(mois = c("Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Aout", "Septembre","Octobre", "Novembre", "Décembre"))
+        dplyr::mutate(mois = c("Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre","Octobre", "Novembre", "Décembre"))
       
       # colors
       first <- rgb(0.18,0.545,0.341,0.8)
@@ -152,9 +163,10 @@ mod_pheno_species_server <- function(id, site_name, site, rcoleo_sites_sf, bats_
           ggplot2::aes(x=min_yd, y=Taxon, label="Première\nobservation"),
           color=first, size=3, vjust=-0.5, fontface="bold") +
         ## Add labels to values
-        # ggplot2::geom_text(
-        #   ggplot2::aes(x=min_wk, y=Taxon, label=min_d),
-        #   color=first, size=2.75, vjust=2.5) +
+        ggplot2::geom_text(
+          ggplot2::aes(x=min_yd, y=Taxon, label=date_lbl),
+#                       label=ifelse(ordre == "premiere_obs", min_d, "")),
+          color=first, size=2.75, vjust=2.5) +
         # ggplot2::geom_text(
         #   ggplot2::aes(x=max_wk, y=Taxon, label=max_d),
         #   color=last, size=2.75, vjust=2.5) +
