@@ -48,14 +48,14 @@ app_server <- function( input, output, session ) {
   # stat cards
   mod_fun_facts_server('fun_facts', acoustique_obs)
   
-  mapselector::mod_modal_make_server("modal_make_ui_1", 
-                        region = chosen_site,
-                        title_format_pattern = "La phénologie pour le site %s",
-                        # here place all the tabs you want in your final modal! 
-                        ## this can be a function which returns a reactive output (e.g. renderPlotly)
-                        tabPanel(title = "Visualization",
-                                 plot_both_together(chosen_region, gantt_data, count_data))
-  )
+  # mapselector::mod_modal_make_server("modal_make_ui_1", 
+  #                       region = chosen_site,
+  #                       title_format_pattern = "La phénologie pour le site %s",
+  #                       # here place all the tabs you want in your final modal! 
+  #                       ## this can be a function which returns a reactive output (e.g. renderPlotly)
+  #                       tabPanel(title = "Visualization",
+  #                                plot_both_together(chosen_region, gantt_data, count_data))
+  # )
   
   
   # bat sites ---------------------------------------------------------------
@@ -68,13 +68,20 @@ app_server <- function( input, output, session ) {
     mapselector::make_site_name(got_clicked_site_val = chosen_site(), site_code_lookup)
   })
   
-  # Figure: Phenology at one site
+  # Phenology at one site as a lollipop plot
   mod_pheno_species_server('pheno_species', clicked_site_name, chosen_site, acoustique_sites_sf, bats_pheno)
+  # hist type bat plot
+  mod_hist_species_server('pheno_hist', clicked_site_name, chosen_site, acoustique_sites_sf, bats_pheno)
+  # Module
   mapselector::mod_modal_make_server("modal_make_ui_bats", 
                         region = chosen_site,
                         title_format_pattern = "La phénologie pour le site %s",
-                        tabPanel(title = "Chauves-souris",
-                                 mod_pheno_species_ui("pheno_species"))
+                        # Pheno as lollipop plot
+                        tabPanel(title = "Pédiode d'observation",
+                                 mod_pheno_species_ui("pheno_species")),
+                        # Pheno as an abundance histogram
+                        tabPanel(title = "Répartition annuelle",
+                                 mod_pheno_hist_ui("pheno_hist"))
   )
-
+  
 }

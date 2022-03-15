@@ -95,7 +95,7 @@ ggObsTable <- function(dat, val.colname,
     geom_text(aes_string(label = var.y.colname),
               x = 0.1, y = 0.5, 
               hjust = 0, vjust = 0.5, 
-              #fontface = "bold"
+              fontface = "plain",
               size = 3) +
     # need these next lines so text isn't cropped
     scale_x_continuous(limits = c(0, 1), expand = expansion(0,0)) +
@@ -114,7 +114,7 @@ ggObsTable <- function(dat, val.colname,
             panel.spacing = unit(0,"pt"),
             # remove next line if omitting left side
             strip.text.y = element_blank(),
-            strip.text.x.top = element_text(color = "white", #face = "bold", 
+            strip.text.x.top = element_text(color = "white", face = "plain", 
                                             margin = margin(t = 4, b = 4)),
             strip.background.x = element_rect(fill = bg.fill, color = "white", size = 1),
             panel.border = element_rect(fill = NA, color = "white", size = 1)
