@@ -1,0 +1,82 @@
+---
+title: "décalage_phénologique"
+author: "Victor Cameron"
+date: "16/03/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Objectifs :** 
+- Témoigner des changements temporels dans la phénologie
+- Présenter une synthèse de la phénologie spatiale et temporelle ainsi que ses changements
+- Projeter les changements de phénologie
+
+Pour l'instant, les données permettent de faire une synthèse et des pojections temporelles de phénologie des chauves-souris. Ces données nous permettent de mesurer la date d'arrivée des différents taxons aux sites. Avec des données climatique, il serait possible de croiser ces dates aux températures locales pour obtenir une relation entre le climat et la première observation. Ainsi, à l'aide de projections climatiques futures nous pourrons estimer les changements de date.
+Toutefois, les données climatiques rendues disponibles par 'stacProj' ne sont précises qu'au mois. Cela est insuffisant pour établir des relation précises.
+
+
+```{r}
+#-------------------------------------------------------------------------------
+# Données redues disponibles par app_server
+#-------------------------------------------------------------------------------
+acoustique_sites_sf <- rcoleo::download_sites_sf() |> mapselector::add_site_name_df() |> mapselector::subset_site_df(campaign_type = "acoustique")
+
+acoustique_obs <- rcoleo::get_gen('/species_arrival_departure', query=list('campaign_type'='acoustique'))
+
+bats_pheno <- 
+  acoustique_obs |>
+  dplyr::mutate(
+    ## Get dates
+    min_date = lubridate::ymd(min_date),
+    max_date = lubridate::ymd(max_date),
+    min_yd = lubridate::yday(min_date),
+    max_yd = lubridate::yday(max_date),
+    min_d = lubridate::day(min_date),
+    max_d = lubridate::day(max_date),
+    ## Rename taxa name
+    Taxon = factor(taxa_name),
+    ## Compute presence time
+    pres = (lubridate::interval(min_date, max_date) / lubridate::days(1))+1) |>
+  ## Add display_name column
+  dplyr::left_join(acoustique_sites_sf, by = "site_code") |>
+  # Select required columns
+  dplyr::select(Taxon, min_yd, max_yd, pres, min_d, max_d, year, min_date, site_code, display_name)
+
+
+#-------------------------------------------------------------------------------
+# Explore data
+#-------------------------------------------------------------------------------
+bats_pheno |>
+  dplyr::group_by(Taxon, year) |>
+  dplyr::mutate(min_yd_y = min(min_yd)) |>
+  dplyr::ungroup() |>
+  ## Pour compter le nombre d'années où chaque taxon a été mesuré
+  dplyr::group_by(Taxon, year) |> dplyr::summarise(n = dplyr:::n()) |>
+  dplyr::group_by(Taxon) |> dplyr::distinct(year)
+
+
+
+#-------------------------------------------------------------------------------
+# Dates par années pour chaque taxon
+#   - Ne peut pas sélectionner de site pour l'instant parce qu'ils sont re-mesuré aux 5 ans
+#-------------------------------------------------------------------------------
+bats_pheno |>
+  dplyr::group_by(Taxon, year) |>
+  ## Pour compter le nombre d'années où chaque taxon a été mesuré
+  dplyr::mutate(n = dplyr::n()) |>
+  dplyr::summarise(min_yd_y = min(min_yd),
+                   mean_yd_y = mean(min_yd),
+                   max_yd_y = max(min_yd),
+                   var_yd_y = var(min_yd))
+
+
+  dplyr::group_by(site_code, Taxon) |> dplyr::summarise(n = dplyr::n())
+
+
+
+
+```
+
