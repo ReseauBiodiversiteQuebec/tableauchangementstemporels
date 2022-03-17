@@ -69,16 +69,17 @@ mod_pheno_sites_server <- function(id, acoustique_sites_sf, bats_pheno){
         # Get site's latitude
         dplyr::left_join(rcoleo_sites_bats, by = "site_code")
       
-      # Add labels to points if ordre == "premiere_obs"
+      # Add labels to points
       m_en <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
       m_fr <- c("Jan", "Fév", "Mars", "Avril", "Mai", "Juin", "Juil", "Août", "Sept","Oct", "Nov", "Déc")
-      if(input$ordre == "premiere_obs") {
-        bat_pheno_sites <-
-          bat_pheno_sites|>
-          dplyr::mutate(date_lbl = lubridate::month(min_date, abbr = TRUE, label = TRUE),
-                        date_lbl = sapply(lubridate::month(bat_pheno_sites$min_date, abbr = TRUE, label = TRUE), function(x) m_fr[m_en == x]),
-                        date_lbl = paste(min_d, date_lbl))
-      }else {bat_pheno_sites$date_lbl <- NA}
+      bat_pheno_sites <-
+        bat_pheno_sites|>
+        dplyr::mutate(date_lbl = lubridate::month(min_date, abbr = TRUE, label = TRUE),
+                      date_lbl = sapply(lubridate::month(bat_pheno_sites$min_date, abbr = TRUE, label = TRUE), function(x) m_fr[m_en == x]),
+                      date_lbl = paste(min_d, date_lbl),
+                      max_date_lbl = lubridate::month(max_date, abbr = TRUE, label = TRUE),
+                      max_date_lbl = sapply(lubridate::month(bat_pheno_sites$max_date, abbr = TRUE, label = TRUE), function(x) m_fr[m_en == x]),
+                      max_date_lbl = paste(max_d, max_date_lbl))
       
       
       
@@ -133,9 +134,9 @@ mod_pheno_sites_server <- function(id, acoustique_sites_sf, bats_pheno){
         ggplot2::geom_segment(
           ggplot2::aes(y=display_name, yend=display_name, x=min_yd, xend=max_yd), color="grey", size=1) +
         ## Add first observation points
-        ggplot2::geom_point(ggplot2::aes(y=display_name, x=min_yd), size=2, colour = first) +
+        ggiraph::geom_point_interactive(ggplot2::aes(y=display_name, x=min_yd, tooltip = date_lbl), size=2, colour = first) +
         ## Add last observation points
-        ggplot2::geom_point(ggplot2::aes(y=display_name, x=max_yd), size=2, colour = last) +
+        ggiraph::geom_point_interactive(ggplot2::aes(y=display_name, x=max_yd, tooltip = max_date_lbl), size=2, colour = last) +
         ggplot2::scale_y_discrete(expand = ggplot2::expansion(mult = c(0.06, 0.15))) +
         ## Labels
         ggplot2::geom_text(

@@ -87,16 +87,17 @@ mod_pheno_species_server <- function(id, site_name, site, rcoleo_sites_sf, bats_
         ## Select one site
         dplyr::filter(display_name == site())
       
-      # Add labels to points if ordre == "premiere_obs"
+      # Add labels to points
       m_en <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
       m_fr <- c("Jan", "Fév", "Mars", "Avril", "Mai", "Juin", "Juil", "Août", "Sept","Oct", "Nov", "Déc")
-      if(ordre == "premiere_obs") {
-        bats_pheno_site <-
-          bats_pheno_site|>
-          dplyr::mutate(date_lbl = lubridate::month(min_date, abbr = TRUE, label = TRUE),
-                        date_lbl = sapply(lubridate::month(bats_pheno_site$min_date, abbr = TRUE, label = TRUE), function(x) m_fr[m_en == x]),
-                        date_lbl = paste(min_d, date_lbl))
-      }else {bats_pheno_site$date_lbl <- NA}
+      bats_pheno_site <-
+        bats_pheno_site|>
+        dplyr::mutate(date_lbl = lubridate::month(min_date, abbr = TRUE, label = TRUE),
+                      date_lbl = sapply(lubridate::month(bats_pheno_site$min_date, abbr = TRUE, label = TRUE), function(x) m_fr[m_en == x]),
+                      date_lbl = paste(min_d, date_lbl),
+                      max_date_lbl = lubridate::month(max_date, abbr = TRUE, label = TRUE),
+                      max_date_lbl = sapply(lubridate::month(bats_pheno_site$max_date, abbr = TRUE, label = TRUE), function(x) m_fr[m_en == x]),
+                      max_date_lbl = paste(max_d, max_date_lbl))
       
       # Order species
       if(ordre == "premiere_obs") {
@@ -150,9 +151,10 @@ mod_pheno_species_server <- function(id, site_name, site, rcoleo_sites_sf, bats_
         ggplot2::geom_segment(
           ggplot2::aes(y=Taxon, yend=Taxon, x=min_yd, xend=max_yd), color="grey", size=1.5) +
         ## Add first observation points
-        ggplot2::geom_point(ggplot2::aes(y=Taxon, x=min_yd), size=3, colour = first) +
+        #ggplot2::geom_point(ggplot2::aes(y=Taxon, x=min_yd), size=3, colour = first) +
+        ggiraph::geom_point_interactive(ggplot2::aes(y=Taxon, x=min_yd, tooltip=date_lbl), size=3, colour = first) +
         ## Add last observation points
-        ggplot2::geom_point(ggplot2::aes(y=Taxon, x=max_yd), size=3, colour = last) +
+        ggiraph::geom_point_interactive(ggplot2::aes(y=Taxon, x=max_yd, tooltip=max_date_lbl), size=3, colour = last) +
         ## Labels
         ggplot2::geom_text(
           data=dplyr::filter(bats_pheno_site, bats_pheno_site$Taxon==tail(levels(bats_pheno_site$Taxon), n=1)),

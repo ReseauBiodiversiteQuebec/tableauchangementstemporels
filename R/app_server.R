@@ -37,7 +37,7 @@ app_server <- function( input, output, session ) {
     ## Add display_name column
     dplyr::left_join(acoustique_sites_sf, by = "site_code") |>
     # Select required columns
-    dplyr::select(Taxon, min_yd, max_yd, pres, min_d, max_d, min_date, site_code, display_name)
+    dplyr::select(Taxon, min_yd, max_yd, pres, min_d, max_d, min_date, max_date, site_code, display_name)
   
   chosen_site <- mapselector::mod_map_select_server("bat_map",
                                                     what_to_click = "marker",
