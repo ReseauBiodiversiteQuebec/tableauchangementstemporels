@@ -41,7 +41,7 @@ mod_pheno_species_server <- function(id, site_name, site, rcoleo_sites_sf, bats_
       
       # Compute metrics
       ## Get site_code
-      site_code_sel <- bats_pheno$site_code[bats_pheno$display_name == site()]
+      site_code_sel <- bats_pheno$site_code[bats_pheno$display_name == site()] |> unique()
       ## Get all the coleo sites
       obs_site <- rcoleo::download_sites_sf(token = rcoleo:::bearer()) |>
         mapselector::subset_site_df(campaign_type = "acoustique") |>

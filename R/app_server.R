@@ -17,7 +17,16 @@ app_server <- function( input, output, session ) {
   
   ## replace with mapselector::subset_site_df
   acoustique_sites_sf <- rcoleo::download_sites_sf() |> mapselector::add_site_name_df() |> mapselector::subset_site_df(campaign_type = "acoustique")
+
+  ## Calcule le nombre d'observations
+  obs_sum <- rcoleo::get_gen("/species_abundance_count") |>
+    dplyr::filter(campaign_type == "acoustique") |>
+    dplyr::select(cnt) |>
+    unlist() |>
+    as.numeric() |>
+    sum()
   
+  ## calcule la date d'arrivée de chaque espèce pour chaque site
   acoustique_obs <- rcoleo::get_gen('/species_arrival_departure', query=list('campaign_type'='acoustique')) 
   
   bats_pheno <- 
@@ -46,7 +55,7 @@ app_server <- function( input, output, session ) {
                                                     site_id_col = "display_name")
   
   # stat cards
-  mod_fun_facts_server('fun_facts', acoustique_obs)
+  mod_fun_facts_server('fun_facts', acoustique_obs, obs_sum)
   
   # mapselector::mod_modal_make_server("modal_make_ui_1", 
   #                       region = chosen_site,
